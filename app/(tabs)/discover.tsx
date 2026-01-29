@@ -49,24 +49,34 @@ export default function DiscoverScreen() {
   const [fetchError, setFetchError] = useState(false);
 
   const fetchDjs = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, display_name, username, genres, is_dj')
-      .eq('is_dj', true)
-      .order('display_name');
+    setLoadingDjs(true);
+    setFetchError(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, username, genres, is_dj')
+        .eq('is_dj', true)
+        .order('display_name');
 
-    if (!error && data) {
-      // Check which ones we follow
-      let followedIds: string[] = [];
-      if (user) {
-        const { data: follows } = await supabase
-          .from('followers')
-          .select('dj_id')
-          .eq('follower_id', user.id);
-        followedIds = (follows || []).map((f: any) => f.dj_id);
+      if (error) {
+        setFetchError(true);
+      } else if (data) {
+        // Check which ones we follow
+        let followedIds: string[] = [];
+        if (user) {
+          const { data: follows } = await supabase
+            .from('followers')
+            .select('dj_id')
+            .eq('follower_id', user.id);
+          followedIds = (follows || []).map((f: any) => f.dj_id);
+        }
+        setDjs(data.map((d: any) => ({ ...d, isReal: true, isFollowing: followedIds.includes(d.id) })));
       }
-      setDjs(data.map((d: any) => ({ ...d, isReal: true, isFollowing: followedIds.includes(d.id) })));
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoadingDjs(false);
     }
   };
 
@@ -133,7 +143,37 @@ export default function DiscoverScreen() {
         <Text style={styles.sectionCount}>{allDjs.length} DJs</Text>
       </View>
 
-      {filtered.map(dj => (
+      {/* Loading state */}
+      {loadingDjs && !refreshing && (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.stateText}>Cargando DJs...</Text>
+        </View>
+      )}
+
+      {/* Error state */}
+      {!loadingDjs && fetchError && (
+        <View style={styles.centerState}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.stateTitle}>Error al cargar</Text>
+          <Text style={styles.stateText}>No pudimos obtener los DJs</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={fetchDjs}>
+            <Ionicons name="refresh" size={18} color={colors.textOnPrimary} />
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Empty state */}
+      {!loadingDjs && !fetchError && filtered.length === 0 && (
+        <View style={styles.centerState}>
+          <Ionicons name="headset-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.stateTitle}>{search ? 'Sin resultados' : 'No hay DJs aún'}</Text>
+          <Text style={styles.stateText}>{search ? `No encontramos DJs para "${search}"` : 'Sé el primero en registrarte como DJ'}</Text>
+        </View>
+      )}
+
+      {!loadingDjs && filtered.map(dj => (
         <TouchableOpacity key={dj.id} style={styles.djItem} activeOpacity={0.7}>
           <Avatar name={dj.display_name} size="lg" />
           <View style={styles.djInfo}>
@@ -224,4 +264,13 @@ const styles = StyleSheet.create({
   eventMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   eventDate: { ...typography.caption, color: colors.textMuted },
   notifyBtn: { padding: spacing.sm },
+  centerState: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing['3xl'], gap: spacing.sm },
+  stateTitle: { ...typography.h3, color: colors.textPrimary },
+  stateText: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+    backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full, marginTop: spacing.sm,
+  },
+  retryText: { ...typography.bodyBold, color: colors.textOnPrimary, fontSize: 13 },
 });

@@ -37,15 +37,21 @@ export default function LiveScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [refreshing, setRefreshing] = useState(false);
-  const { sessions, loading, error, fetchLiveSessions } = useSessionStore();
+  const { sessions, loading, fetchLiveSessions } = useSessionStore();
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
-    fetchLiveSessions();
+    fetchLiveSessions().catch(() => setFetchError(true));
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchLiveSessions();
+    setFetchError(false);
+    try {
+      await fetchLiveSessions();
+    } catch {
+      setFetchError(true);
+    }
     setRefreshing(false);
   };
 
@@ -107,12 +113,12 @@ export default function LiveScreen() {
       )}
 
       {/* Error state */}
-      {!loading && error && (
+      {!loading && fetchError && (
         <View style={styles.centerState}>
           <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
           <Text style={styles.stateTitle}>Sin conexión</Text>
           <Text style={styles.stateText}>No pudimos cargar las sesiones</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={fetchLiveSessions}>
+          <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
             <Ionicons name="refresh" size={18} color={colors.textOnPrimary} />
             <Text style={styles.retryText}>Reintentar</Text>
           </TouchableOpacity>
@@ -120,7 +126,7 @@ export default function LiveScreen() {
       )}
 
       {/* Empty state */}
-      {!loading && !error && sessions.length === 0 && MOCK_SESSIONS.length === 0 && (
+      {!loading && !fetchError && sessions.length === 0 && MOCK_SESSIONS.length === 0 && (
         <View style={styles.centerState}>
           <Ionicons name="radio-outline" size={48} color={colors.textMuted} />
           <Text style={styles.stateTitle}>No hay sesiones en vivo</Text>

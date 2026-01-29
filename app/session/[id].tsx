@@ -15,6 +15,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,6 +92,8 @@ export default function SessionScreen() {
   const router = useRouter();
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>(MOCK_MESSAGES);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const { currentSession, fetchSession } = useSessionStore();
 
@@ -111,6 +114,8 @@ export default function SessionScreen() {
     if (!id) return;
 
     const fetchMessages = async () => {
+      setLoadingMessages(true);
+      setFetchError(false);
       const { data, error } = await supabase
         .from('messages')
         .select('id, content, created_at, user_id, is_system, profiles!messages_user_id_fkey(display_name, username)')
@@ -118,7 +123,9 @@ export default function SessionScreen() {
         .order('created_at', { ascending: true })
         .limit(100);
 
-      if (!error && data && data.length > 0) {
+      if (error) {
+        setFetchError(true);
+      } else if (data && data.length > 0) {
         const dbMessages: ChatMessage[] = data.map((m: any) => ({
           id: m.id,
           user: m.profiles?.display_name || m.profiles?.username || 'Anónimo',
@@ -131,6 +138,7 @@ export default function SessionScreen() {
         // DB messages first, then mock as fallback padding
         setMessages([...dbMessages, ...MOCK_MESSAGES]);
       }
+      setLoadingMessages(false);
       // If no DB messages, keep mock
     };
 
@@ -226,10 +234,10 @@ export default function SessionScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Avatar name={MOCK_SESSION.dj} size="sm" online />
+        <Avatar name={djName} size="sm" online />
         <View style={styles.headerInfo}>
-          <Text style={styles.sessionName}>{MOCK_SESSION.name}</Text>
-          <Text style={styles.djName}>{MOCK_SESSION.dj} · {MOCK_SESSION.listeners} oyentes</Text>
+          <Text style={styles.sessionName}>{sessionName}</Text>
+          <Text style={styles.djName}>{djName} · {listenerCount} oyentes</Text>
         </View>
         <Badge text="EN VIVO" variant="live" dot />
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.push('/session/queue')}>
@@ -251,9 +259,31 @@ export default function SessionScreen() {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={styles.messagesList}
+          contentContainerStyle={[styles.messagesList, messages.length === 0 && { flex: 1 }]}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          ListHeaderComponent={
+            loadingMessages ? (
+              <View style={styles.centerState}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={styles.stateText}>Cargando chat...</Text>
+              </View>
+            ) : fetchError ? (
+              <View style={styles.centerState}>
+                <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
+                <Text style={styles.stateText}>Error al cargar mensajes</Text>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            !loadingMessages && !fetchError ? (
+              <View style={styles.centerState}>
+                <Ionicons name="chatbubble-ellipses-outline" size={48} color={colors.textMuted} />
+                <Text style={styles.stateTitle}>Sin mensajes aún</Text>
+                <Text style={styles.stateText}>¡Sé el primero en escribir!</Text>
+              </View>
+            ) : null
+          }
         />
 
         {/* Mini player */}
@@ -263,12 +293,12 @@ export default function SessionScreen() {
               <Ionicons name="musical-note" size={16} color={colors.primary} />
             </View>
             <View>
-              <Text style={styles.songName}>{MOCK_SESSION.currentSong}</Text>
-              <Text style={styles.artistName}>{MOCK_SESSION.currentArtist}</Text>
+              <Text style={styles.songName}>{currentSong}</Text>
+              <Text style={styles.artistName}>{currentArtist}</Text>
             </View>
           </View>
           <View style={styles.progressBar}>
-            <View style={[styles.progress, { width: `${MOCK_SESSION.progress * 100}%` }]} />
+            <View style={[styles.progress, { width: `${(currentSession as any)?.progress ? (currentSession as any).progress * 100 : MOCK_SESSION.progress * 100}%` }]} />
           </View>
           <TouchableOpacity>
             <Ionicons name="heart-outline" size={22} color={colors.textSecondary} />
@@ -277,8 +307,11 @@ export default function SessionScreen() {
 
         {/* Input bar */}
         <View style={styles.inputBar}>
-          <TouchableOpacity style={styles.inputBtn}>
+          <TouchableOpacity style={styles.inputBtn} onPress={() => router.push('/session/request-song')}>
             <Ionicons name="add-circle" size={28} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.inputBtn} onPress={() => router.push('/session/send-tip')}>
+            <Ionicons name="cash-outline" size={24} color={colors.accent} />
           </TouchableOpacity>
           <TextInput
             style={styles.textInput}
@@ -465,4 +498,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     fontSize: 15,
   },
+  centerState: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing['3xl'], gap: spacing.sm },
+  stateTitle: { ...typography.h3, color: colors.textPrimary },
+  stateText: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
 });

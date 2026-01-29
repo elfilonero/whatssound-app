@@ -11,6 +11,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,17 +26,17 @@ import { supabase } from '../../src/lib/supabase';
 
 export default function DJPanelScreen() {
   const router = useRouter();
-  const { currentSession, queue, fetchSession, fetchQueue, endSession } = useSessionStore();
+  const { currentSession, queue, loading, fetchSession, fetchQueue, endSession } = useSessionStore();
   const [isLive, setIsLive] = useState(true);
   const [stats, setStats] = useState({ listeners: 0, songs: 0, tips: 0 });
+  const [fetchError, setFetchError] = useState(false);
 
   // Use the first live session or a known one
   const sessionId = currentSession?.id || '9ee38aaa-30a1-4aa8-9925-3155597ad025';
 
   useEffect(() => {
-    fetchSession(sessionId);
-    fetchQueue(sessionId);
-    fetchStats();
+    Promise.all([fetchSession(sessionId), fetchQueue(sessionId), fetchStats()])
+      .catch(() => setFetchError(true));
   }, []);
 
   const fetchStats = async () => {
@@ -97,9 +98,39 @@ export default function DJPanelScreen() {
         <Badge text={isLive ? 'EN VIVO' : 'PAUSADA'} variant={isLive ? 'live' : 'muted'} dot />
       </View>
 
+      {/* Loading state */}
+      {loading && (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.stateText}>Cargando panel...</Text>
+        </View>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <View style={styles.centerState}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.stateTitle}>Error al cargar</Text>
+          <Text style={styles.stateText}>No pudimos cargar la sesión</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => { fetchSession(sessionId); fetchQueue(sessionId); }}>
+            <Ionicons name="refresh" size={18} color={colors.textOnPrimary} />
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Session Name */}
-      {currentSession && (
+      {!loading && currentSession && (
         <Text style={styles.sessionName}>{currentSession.name}</Text>
+      )}
+
+      {/* No session state */}
+      {!loading && !error && !currentSession && (
+        <View style={styles.centerState}>
+          <Ionicons name="disc-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.stateTitle}>Sin sesión activa</Text>
+          <Text style={styles.stateText}>Crea una sesión para empezar a pinchar</Text>
+        </View>
       )}
 
       {/* Now Playing Card */}
@@ -252,4 +283,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface, borderRadius: borderRadius.lg,
   },
   actionText: { ...typography.caption, color: colors.textSecondary },
+  centerState: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing['3xl'], gap: spacing.sm },
+  stateTitle: { ...typography.h3, color: colors.textPrimary },
+  stateText: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+    backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full, marginTop: spacing.sm,
+  },
+  retryText: { ...typography.bodyBold, color: colors.textOnPrimary, fontSize: 13 },
 });

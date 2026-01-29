@@ -12,6 +12,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -94,9 +95,10 @@ const SongItem = ({ song, onVote }: { song: Song; onVote: () => void }) => (
 
 export default function QueueScreen() {
   const router = useRouter();
-  const { queue: dbQueue, fetchQueue, voteSong } = useSessionStore();
+  const { queue: dbQueue, loading, fetchQueue, voteSong } = useSessionStore();
   const [localQueue, setLocalQueue] = useState<Song[]>(MOCK_QUEUE);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   // Map DB queue items to Song format
   const mapDBtoSong = useCallback((items: typeof dbQueue): Song[] => {
@@ -126,7 +128,7 @@ export default function QueueScreen() {
   }, [dbQueue, mapDBtoSong]);
 
   useEffect(() => {
-    fetchQueue(SESSION_ID);
+    fetchQueue(SESSION_ID).catch(() => setFetchError(true));
 
     // Realtime: refresh queue on any change
     const channel = supabase
@@ -215,7 +217,7 @@ export default function QueueScreen() {
             <SongItem song={item} onVote={() => handleVote(item.id, item.fromDB)} />
           </>
         )}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, localQueue.length === 0 && { flex: 1 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -224,6 +226,32 @@ export default function QueueScreen() {
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
+        }
+        ListHeaderComponent={
+          loading && !refreshing ? (
+            <View style={styles.centerState}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.stateText}>Cargando cola...</Text>
+            </View>
+          ) : fetchError ? (
+            <View style={styles.centerState}>
+              <Ionicons name="cloud-offline-outline" size={40} color={colors.textMuted} />
+              <Text style={styles.stateText}>Error al cargar la cola</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={() => fetchQueue(SESSION_ID)}>
+                <Ionicons name="refresh" size={18} color={colors.textOnPrimary} />
+                <Text style={styles.retryText}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          !loading && !fetchError ? (
+            <View style={styles.centerState}>
+              <Ionicons name="musical-notes-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.stateTitle}>Cola vacía</Text>
+              <Text style={styles.stateText}>¡Pide la primera canción!</Text>
+            </View>
+          ) : null
         }
       />
     </View>
@@ -343,4 +371,13 @@ const styles = StyleSheet.create({
   voteCountActive: {
     color: colors.primary,
   },
+  centerState: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing['3xl'], gap: spacing.sm },
+  stateTitle: { ...typography.h3, color: colors.textPrimary },
+  stateText: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+    backgroundColor: colors.primary, paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full, marginTop: spacing.sm,
+  },
+  retryText: { ...typography.bodyBold, color: colors.textOnPrimary, fontSize: 13 },
 });
