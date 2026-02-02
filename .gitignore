@@ -4,3 +4,4 @@ dist/
 *.tsbuildinfo
 .github/workflows/
 .github/
+referencia/
