@@ -5,3 +5,5 @@ dist/
 .github/workflows/
 .github/
 referencia/
+.vercel
+.env*.local
