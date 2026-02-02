@@ -1,98 +1,98 @@
 /**
- * WhatsSound — Historial (accesible desde perfil, no tab directa)
- * Historial de sesiones pasadas del usuario
+ * WhatsSound — Historial de Sesiones
+ * Referencia: 31-historial-sesiones.png
+ * Filtros: Todas, Como DJ, Como Oyente + cards sesión
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
-import { Card } from '../../src/components/ui/Card';
-import { Avatar } from '../../src/components/ui/Avatar';
 
-interface PastSession {
-  id: string;
-  name: string;
-  dj: string;
-  date: string;
-  duration: string;
-  listeners: number;
-  songs: number;
-  genre: string;
-  wasDJ: boolean;
-}
-
-const HISTORY: PastSession[] = [
-  { id: '1', name: 'Viernes Latino 🔥', dj: 'Carlos', date: 'Hoy 19:00', duration: '2h 15m', listeners: 47, songs: 24, genre: 'Reggaeton', wasDJ: false },
-  { id: '2', name: 'Cumple Sara 🎂', dj: 'DJ Marcos', date: 'Ayer 21:00', duration: '3h 20m', listeners: 15, songs: 38, genre: 'Pop', wasDJ: false },
-  { id: '3', name: 'Mi primera sesión', dj: 'Tú', date: 'Sáb 25 Ene', duration: '1h 45m', listeners: 8, songs: 12, genre: 'Lo-Fi', wasDJ: true },
-  { id: '4', name: 'After Office', dj: 'Javi', date: 'Vie 24 Ene', duration: '2h', listeners: 22, songs: 18, genre: 'Electrónica', wasDJ: false },
-  { id: '5', name: 'Techno Night', dj: 'MNML_Dave', date: 'Jue 23 Ene', duration: '4h 10m', listeners: 128, songs: 52, genre: 'Techno', wasDJ: false },
+const SESSIONS = [
+  { name: 'Viernes Latino 🔥', genre: 'Reggaeton · Latin', role: 'DJ', date: 'Hoy, 02:30', duration: '2h 15m', peak: 47, songs: 34 },
+  { name: 'Techno Nights 🌙', genre: 'Techno · Electronic', role: 'Oyente', date: 'Ayer, 23:00', duration: '1h 45m', peak: 82, songs: 28 },
+  { name: 'Chill Sunday 🌤️', genre: 'Lo-fi · Chill', role: 'DJ', date: 'Dom, 11:00', duration: '3h 20m', peak: 23, songs: 45 },
+  { name: 'Reggaeton Mix 🎉', genre: 'Reggaeton', role: 'DJ', date: 'Sáb, 22:00', duration: '4h 00m', peak: 96, songs: 58 },
+  { name: 'Indie Acústico 🎸', genre: 'Indie · Acústico', role: 'Oyente', date: 'Vie, 19:00', duration: '1h 30m', peak: 15, songs: 18 },
 ];
+
+const FILTERS = ['Todas', 'Como DJ', 'Como Oyente'] as const;
 
 export default function HistoryScreen() {
   const router = useRouter();
+  const [filter, setFilter] = useState<string>('Todas');
+
+  const filtered = filter === 'Todas' ? SESSIONS :
+    filter === 'Como DJ' ? SESSIONS.filter(s => s.role === 'DJ') :
+    SESSIONS.filter(s => s.role === 'Oyente');
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Historial</Text>
-      <Text style={styles.subtitle}>{HISTORY.length} sesiones · Último mes</Text>
+    <View style={s.container}>
+      <View style={s.header}>
+        <Text style={s.headerTitle}>Historial</Text>
+      </View>
 
-      <FlatList
-        data={HISTORY}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <Card style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardLeft}>
-                <Avatar name={item.dj} size="md" />
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardName}>{item.name}</Text>
-                  <Text style={styles.cardDj}>
-                    {item.wasDJ ? '🎧 Fuiste DJ' : `DJ: ${item.dj}`} · {item.genre}
-                  </Text>
+      {/* Filters */}
+      <View style={s.filters}>
+        {FILTERS.map(f => (
+          <TouchableOpacity key={f} style={[s.filterPill, filter === f && s.filterActive]} onPress={() => setFilter(f)}>
+            <Text style={[s.filterText, filter === f && s.filterTextActive]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView contentContainerStyle={s.list}>
+        {filtered.map((session, i) => (
+          <TouchableOpacity key={i} style={s.card}>
+            <View style={s.cardHeader}>
+              <View>
+                <Text style={s.sessionName}>{session.name}</Text>
+                <Text style={s.sessionGenre}>{session.genre}</Text>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <View style={[s.roleBadge, session.role === 'DJ' ? s.roleDJ : s.roleOyente]}>
+                  <Text style={[s.roleText, session.role === 'DJ' ? s.roleDJText : s.roleOyenteText]}>{session.role}</Text>
                 </View>
-              </View>
-              <Text style={styles.cardDate}>{item.date}</Text>
-            </View>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.statText}>{item.duration}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.statText}>{item.listeners}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Ionicons name="musical-notes-outline" size={14} color={colors.textMuted} />
-                <Text style={styles.statText}>{item.songs} canciones</Text>
+                <Text style={s.sessionDate}>{session.date}</Text>
               </View>
             </View>
-          </Card>
-        )}
-        contentContainerStyle={styles.list}
-      />
+            <View style={s.cardStats}>
+              <Text style={s.statItem}>⏱ {session.duration}</Text>
+              <Text style={s.statItem}>👥 {session.peak} pico</Text>
+              <Text style={s.statItem}>🎵 {session.songs} canciones</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.base },
-  title: { ...typography.h1, color: colors.textPrimary, marginTop: spacing.md },
-  subtitle: { ...typography.bodySmall, color: colors.textMuted, marginBottom: spacing.lg },
-  list: { paddingBottom: spacing['3xl'] },
-  card: { marginBottom: spacing.sm, padding: spacing.md },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm },
-  cardLeft: { flexDirection: 'row', gap: spacing.md, flex: 1 },
-  cardInfo: { flex: 1, gap: 2 },
-  cardName: { ...typography.bodyBold, color: colors.textPrimary },
-  cardDj: { ...typography.caption, color: colors.textSecondary },
-  cardDate: { ...typography.caption, color: colors.textMuted },
-  statsRow: { flexDirection: 'row', gap: spacing.lg },
-  statItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  statText: { ...typography.caption, color: colors.textMuted },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { paddingHorizontal: spacing.base, paddingTop: spacing.xl, paddingBottom: spacing.sm },
+  headerTitle: { ...typography.h2, color: colors.textPrimary, fontSize: 22 },
+  filters: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.base, paddingBottom: spacing.md },
+  filterPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: borderRadius.full, backgroundColor: colors.surface },
+  filterActive: { backgroundColor: colors.primary + '20' },
+  filterText: { ...typography.captionBold, color: colors.textMuted, fontSize: 13 },
+  filterTextActive: { color: colors.primary },
+  list: { padding: spacing.base, gap: spacing.md, paddingBottom: 100 },
+  card: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.base, borderWidth: 1, borderColor: colors.border },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  sessionName: { ...typography.bodyBold, color: colors.textPrimary, fontSize: 16 },
+  sessionGenre: { ...typography.caption, color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+  roleBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: borderRadius.full },
+  roleDJ: { backgroundColor: colors.primary },
+  roleOyente: { backgroundColor: colors.surfaceLight },
+  roleText: { ...typography.captionBold, fontSize: 11 },
+  roleDJText: { color: '#fff' },
+  roleOyenteText: { color: colors.textSecondary },
+  sessionDate: { ...typography.caption, color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  cardStats: { flexDirection: 'row', gap: spacing.lg },
+  statItem: { ...typography.captionBold, color: colors.textPrimary, fontSize: 12 },
 });

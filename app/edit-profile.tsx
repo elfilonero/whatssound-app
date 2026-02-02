@@ -1,134 +1,83 @@
 /**
  * WhatsSound — Editar Perfil
- * Editar nombre, bio, avatar, género favorito
+ * Referencia: 36-editar-perfil.png
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, borderRadius } from '../src/theme/spacing';
-import { Avatar } from '../src/components/ui/Avatar';
-import { Button } from '../src/components/ui/Button';
-import { Input } from '../src/components/ui/Input';
-import { useAuthStore } from '../src/stores/authStore';
-
-const GENRES = ['Reggaeton', 'Pop', 'Rock', 'Techno', 'Lo-Fi', 'Hip Hop', 'Indie', 'Jazz', 'Latina', 'Electrónica'];
 
 export default function EditProfileScreen() {
   const router = useRouter();
-  const { profile, updateProfile } = useAuthStore();
-  const [name, setName] = useState(profile?.display_name || '');
-  const [username, setUsername] = useState(profile?.username ? `@${profile.username}` : '');
-  const [bio, setBio] = useState(profile?.bio || '');
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(profile?.genres || []);
-  const [saving, setSaving] = useState(false);
-
-  const toggleGenre = (g: string) => {
-    setSelectedGenres(prev =>
-      prev.includes(g) ? prev.filter(x => x !== g) : prev.length < 3 ? [...prev, g] : prev
-    );
-  };
+  const [name, setName] = useState('Carlos Mendoza');
+  const [username, setUsername] = useState('carlosmendoza');
+  const [bio, setBio] = useState('Amante de la música y DJ amateur 🎧');
+  const [djName, setDjName] = useState('DJ Carlos');
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
+    <View style={s.container}>
+      <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.cancel}>Cancelar</Text>
+          <Text style={s.cancelText}>Cancelar</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Editar perfil</Text>
-        <TouchableOpacity onPress={async () => {
-          setSaving(true);
-          await updateProfile({
-            display_name: name,
-            username: username.replace('@', ''),
-            bio,
-            genres: selectedGenres,
-          });
-          setSaving(false);
-          router.back();
-        }}>
-          <Text style={styles.save}>{saving ? 'Guardando...' : 'Guardar'}</Text>
+        <Text style={s.headerTitle}>Editar perfil</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={s.saveText}>Guardar</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Avatar */}
-      <View style={styles.avatarSection}>
-        <Avatar name={name} size="xl" />
-        <TouchableOpacity style={styles.changePhoto}>
-          <Ionicons name="camera" size={16} color={colors.textOnPrimary} />
+      <ScrollView contentContainerStyle={s.content}>
+        {/* Avatar */}
+        <TouchableOpacity style={s.avatarContainer}>
+          <View style={s.avatar}>
+            <Ionicons name="person" size={40} color={colors.textMuted} />
+          </View>
+          <Text style={s.changePhoto}>Cambiar foto</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.changeText}>Cambiar foto</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Fields */}
-      <Input label="Nombre" value={name} onChangeText={setName} maxLength={20} />
-      <Input label="Usuario" value={username} onChangeText={setUsername} maxLength={20} />
-      <Input label="Bio" value={bio} onChangeText={setBio} maxLength={100} multiline numberOfLines={3} />
+        {/* Fields */}
+        <Text style={s.label}>Nombre</Text>
+        <TextInput style={s.input} value={name} onChangeText={setName} />
 
-      {/* Genres */}
-      <Text style={styles.sectionLabel}>GÉNEROS FAVORITOS (máx. 3)</Text>
-      <View style={styles.genresGrid}>
-        {GENRES.map(g => (
-          <TouchableOpacity
-            key={g}
-            style={[styles.genreChip, selectedGenres.includes(g) && styles.genreChipSelected]}
-            onPress={() => toggleGenre(g)}
-          >
-            <Text style={[styles.genreText, selectedGenres.includes(g) && styles.genreTextSelected]}>{g}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+        <Text style={s.label}>Usuario</Text>
+        <TextInput style={s.input} value={username} onChangeText={setUsername} autoCapitalize="none" />
 
-      {/* DJ section */}
-      <Text style={styles.sectionLabel}>PERFIL DE DJ</Text>
-      <TouchableOpacity style={styles.djCard}>
-        <Ionicons name="headset" size={24} color={colors.primary} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.djCardTitle}>Activar perfil de DJ</Text>
-          <Text style={styles.djCardSub}>Crea sesiones musicales, recibe propinas</Text>
+        <Text style={s.label}>Bio</Text>
+        <TextInput style={[s.input, { minHeight: 80 }]} value={bio} onChangeText={setBio} multiline maxLength={150} />
+
+        <Text style={s.label}>Nombre DJ</Text>
+        <TextInput style={s.input} value={djName} onChangeText={setDjName} />
+
+        <Text style={s.label}>Géneros favoritos</Text>
+        <View style={s.genresWrap}>
+          {['Reggaetón', 'Latin House', 'Electrónica', 'Pop', 'Techno'].map(g => (
+            <View key={g} style={s.genrePill}>
+              <Text style={s.genreText}>{g}</Text>
+            </View>
+          ))}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'] },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-  },
-  headerTitle: { ...typography.h3, color: colors.textPrimary },
-  cancel: { ...typography.body, color: colors.textSecondary },
-  save: { ...typography.bodyBold, color: colors.primary },
-  avatarSection: { alignItems: 'center', marginVertical: spacing.xl, position: 'relative' },
-  changePhoto: {
-    position: 'absolute', bottom: 28, right: '35%',
-    width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.background,
-  },
-  changeText: { ...typography.bodySmall, color: colors.primary, marginTop: spacing.sm },
-  sectionLabel: { ...typography.captionBold, color: colors.textSecondary, letterSpacing: 0.5, marginBottom: spacing.sm, marginTop: spacing.lg },
-  genresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
-  genreChip: {
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full, backgroundColor: colors.surface,
-    borderWidth: 1.5, borderColor: colors.border,
-  },
-  genreChipSelected: { backgroundColor: colors.primary + '20', borderColor: colors.primary },
-  genreText: { ...typography.bodySmall, color: colors.textSecondary },
-  genreTextSelected: { color: colors.primary, fontWeight: '600' },
-  djCard: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    padding: spacing.base, backgroundColor: colors.surface, borderRadius: borderRadius.xl,
-  },
-  djCardTitle: { ...typography.bodyBold, color: colors.textPrimary },
-  djCardSub: { ...typography.caption, color: colors.textMuted },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.base, paddingVertical: spacing.md },
+  headerTitle: { ...typography.h3, color: colors.textPrimary, fontSize: 18 },
+  cancelText: { ...typography.body, color: colors.textMuted, fontSize: 15 },
+  saveText: { ...typography.bodyBold, color: colors.primary, fontSize: 15 },
+  content: { padding: spacing.base, paddingBottom: 40 },
+  avatarContainer: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xl },
+  avatar: { width: 90, height: 90, borderRadius: 45, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  changePhoto: { ...typography.bodySmall, color: colors.primary, fontSize: 14 },
+  label: { ...typography.caption, color: colors.textSecondary, fontSize: 13, marginBottom: spacing.xs, marginTop: spacing.md },
+  input: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.md, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  genresWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  genrePill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: borderRadius.full, backgroundColor: colors.primary + '20' },
+  genreText: { ...typography.captionBold, color: colors.primary, fontSize: 12 },
 });
