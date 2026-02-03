@@ -16,7 +16,8 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
-import AudioPreview from '../../src/components/AudioPreview';
+// AudioPreview temporarily disabled — will re-enable after fixing
+// import AudioPreview from '../../src/components/AudioPreview';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -280,13 +281,7 @@ export default function SessionScreen() {
       {/* Audio Preview */}
       {nowPlaying.preview && (
         <View style={{marginTop: spacing.lg, alignItems: 'center'}}>
-          <AudioPreview 
-            previewUrl={nowPlaying.preview}
-            trackTitle={nowPlaying.title}
-            artistName={nowPlaying.artist}
-            size="large"
-            showTitle={false}
-          />
+          {/* AudioPreview disabled temporarily */}
         </View>
       )}
       {/* Progress */}
@@ -416,12 +411,7 @@ export default function SessionScreen() {
               </View>
               
               {item.preview && (
-                <AudioPreview 
-                  previewUrl={item.preview}
-                  size="small"
-                  showTitle={false}
-                />
-              )}
+              {/* AudioPreview disabled temporarily */}
               
               <TouchableOpacity style={s.qVote} onPress={()=>vote(item.id)}>
                 <Ionicons name={v?'arrow-up-circle':'arrow-up-circle-outline'} size={26} color={v?colors.primary:colors.textMuted}/>
