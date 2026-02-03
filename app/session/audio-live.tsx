@@ -11,10 +11,38 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
+import { supabase } from '../../src/lib/supabase';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function AudioLiveScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ sessionId?: string }>();
   const [speaking, setSpeaking] = useState(false);
+  const [listenerCount, setListenerCount] = useState(0);
+
+  // Cargar número de oyentes
+  React.useEffect(() => {
+    if (!params.sessionId) return;
+
+    const loadListeners = async () => {
+      const { count } = await supabase
+        .from('ws_session_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', params.sessionId)
+        .is('left_at', null);
+      setListenerCount(count || 0);
+    };
+
+    loadListeners();
+
+    // Suscripción
+    const channel = supabase
+      .channel(`audio-listeners:${params.sessionId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ws_session_members', filter: `session_id=eq.${params.sessionId}` }, () => loadListeners())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [params.sessionId]);
 
   return (
     <View style={s.container}>
@@ -35,7 +63,7 @@ export default function AudioLiveScreen() {
         </View>
 
         <Text style={s.status}>{speaking ? '🔴 En directo' : 'Mantén pulsado para hablar'}</Text>
-        <Text style={s.listeners}>47 personas escuchando</Text>
+        <Text style={s.listeners}>{listenerCount} personas escuchando</Text>
 
         {/* Push-to-talk button */}
         <TouchableOpacity

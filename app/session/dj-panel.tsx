@@ -20,6 +20,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
+import { supabase } from '../../src/lib/supabase';
+import { useLocalSearchParams } from 'expo-router';
+import { getSessionTips } from '../../src/lib/tips';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -95,10 +98,57 @@ const StatCard = ({ icon, iconColor, value, label }: {
 // ─── Main Component ─────────────────────────────────────────
 export default function DJPanelScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ sessionId?: string; id?: string }>();
+  const sessionId = params.sessionId || params.id;
   const [isPlaying, setIsPlaying] = useState(true);
   const [autoDJ, setAutoDJ] = useState(true);
   const [volume, setVolume] = useState(78);
   const progressAnim = useRef(new Animated.Value(CURRENT_SONG.progress)).current;
+  const [stats, setStats] = useState({ listeners: 45, songs: 12, tips: 23.50, duration: '1h 23m' });
+  const [sessionInfo, setSessionInfo] = useState({ name: 'Viernes Latino 🔥', genre: 'Reggaetón clásico' });
+
+  // Cargar datos reales desde Supabase
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const loadData = async () => {
+      // Cargar sesión
+      const { data: session } = await supabase
+        .from('ws_sessions')
+        .select('name, genres, started_at')
+        .eq('id', sessionId)
+        .single();
+
+      if (session) {
+        const duration = Math.floor((Date.now() - new Date(session.started_at).getTime()) / 60000);
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        setSessionInfo({
+          name: session.name,
+          genre: session.genres?.[0] || 'Mix',
+        });
+
+        // Contar miembros, canciones, propinas
+        const [{ count: memberCount }, { count: songCount }, tipsData] = await Promise.all([
+          supabase.from('ws_session_members').select('*', { count: 'exact', head: true }).eq('session_id', sessionId).is('left_at', null),
+          supabase.from('ws_songs').select('*', { count: 'exact', head: true }).eq('session_id', sessionId),
+          getSessionTips(sessionId),
+        ]);
+
+        setStats({
+          listeners: memberCount || 0,
+          songs: songCount || 0,
+          tips: tipsData.total,
+          duration: `${hours}h ${mins}m`,
+        });
+      }
+    };
+
+    loadData();
+    const interval = setInterval(loadData, 30000); // Actualizar cada 30s
+
+    return () => clearInterval(interval);
+  }, [sessionId]);
 
   // Simulate progress
   useEffect(() => {
@@ -130,16 +180,16 @@ export default function DJPanelScreen() {
 
       {/* ── Session Info ── */}
       <View style={styles.sessionBar}>
-        <Text style={styles.sessionName}>Viernes Latino 🔥</Text>
-        <Text style={styles.sessionGenre}>Reggaetón clásico</Text>
+        <Text style={styles.sessionName}>{sessionInfo.name}</Text>
+        <Text style={styles.sessionGenre}>{sessionInfo.genre}</Text>
       </View>
 
       {/* ── Stats Grid ── */}
       <View style={styles.statsGrid}>
-        <StatCard icon="people" iconColor={colors.primary} value="45" label="Listeners" />
-        <StatCard icon="musical-notes" iconColor={colors.accent} value="12" label="Canciones" />
-        <StatCard icon="cash" iconColor={colors.warning} value="€23.50" label="Tips" />
-        <StatCard icon="time" iconColor="#A78BFA" value="1h 23m" label="Activo" />
+        <StatCard icon="people" iconColor={colors.primary} value={String(stats.listeners)} label="Listeners" />
+        <StatCard icon="musical-notes" iconColor={colors.accent} value={String(stats.songs)} label="Canciones" />
+        <StatCard icon="cash" iconColor={colors.warning} value={`€${stats.tips.toFixed(2)}`} label="Tips" />
+        <StatCard icon="time" iconColor="#A78BFA" value={stats.duration} label="Activo" />
       </View>
 
       {/* ── Now Playing ── */}
