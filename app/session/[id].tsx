@@ -410,7 +410,6 @@ export default function SessionScreen() {
                 <Text style={s.qMeta}>Pedida por {item.by} · {item.dur}</Text>
               </View>
               
-              {item.preview && (
               {/* AudioPreview disabled temporarily */}
               
               <TouchableOpacity style={s.qVote} onPress={()=>vote(item.id)}>
