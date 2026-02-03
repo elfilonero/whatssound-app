@@ -16,64 +16,23 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
+import { DEMO_SESSION, DEMO_NOW_PLAYING, DEMO_QUEUE, DEMO_CHAT, DEMO_PEOPLE } from '../../src/lib/demo';
+import AudioPreview from '../../src/components/AudioPreview';
 // Audio playback handled inline with HTML5 Audio
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ══════════ MOCK DATA ══════════
+// ══════════ MOCK DATA (now imported from demo.ts) ══════════
 
-const SESSION = {
-  djName: 'DJ Carlos Madrid',
-  genre: 'Reggaetón / Latin',
-  listeners: 45,
-  queueCount: 12,
-};
+// Use imported mock data
+const SESSION = DEMO_SESSION;
+const NOW = DEMO_NOW_PLAYING;
+const QUEUE = DEMO_QUEUE;
+const CHAT = DEMO_CHAT;
+const PEOPLE = DEMO_PEOPLE;
 
-const NOW = {
-  title: 'Pepas', artist: 'Farruko', album: 'La 167',
-  art: 'https://e-cdns-images.dzcdn.net/images/cover/6ebe38518b35b9fab21e9a1e21b0d400/500x500-000000-80-0-0.jpg',
-  preview: 'https://cdns-preview-d.dzcdn.net/stream/c-deda7fa9316d9e9e880d2c6207e92260-8.mp3',
-  duration: 204, currentTime: 107,
-};
-
-const QUEUE = [
-  { id: 'q1', title: 'Gasolina', artist: 'Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/ed4fed49e1447e63e4e8d0e0e3a20ca3/500x500-000000-80-0-0.jpg', preview: '', by: 'María G.', votes: 8, dur: '3:12' },
-  { id: 'q2', title: 'Despacito', artist: 'Luis Fonsi ft. Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/11be4e951f2e7467b255f4e2a4c37ae8/500x500-000000-80-0-0.jpg', preview: '', by: 'Pablo R.', votes: 6, dur: '3:47' },
-  { id: 'q3', title: 'Dákiti', artist: 'Bad Bunny & Jhay Cortez', art: 'https://e-cdns-images.dzcdn.net/images/cover/59e41ee07b3a9af3e1a8a6ce79b5a7bb/500x500-000000-80-0-0.jpg', preview: '', by: 'Ana L.', votes: 5, dur: '3:25' },
-  { id: 'q4', title: 'La Bicicleta', artist: 'Shakira & Carlos Vives', art: 'https://e-cdns-images.dzcdn.net/images/cover/a61aec4942e11c528e0dda3a39978af3/500x500-000000-80-0-0.jpg', by: 'Carlos M.', votes: 4, dur: '3:40' },
-  { id: 'q5', title: 'Vivir Mi Vida', artist: 'Marc Anthony', art: 'https://e-cdns-images.dzcdn.net/images/cover/cf1ef4ff2daa7e6fde7a171f8e934b33/500x500-000000-80-0-0.jpg', by: 'Sofía T.', votes: 3, dur: '4:11' },
-  { id: 'q6', title: 'Baila Conmigo', artist: 'Selena Gomez & Rauw Alejandro', art: 'https://e-cdns-images.dzcdn.net/images/cover/13e56cd62c1804214ef3e8b1c01c6f67/500x500-000000-80-0-0.jpg', by: 'Diego F.', votes: 2, dur: '3:08' },
-];
-
+// Interface needed for chat messages
 interface ChatMsg { id: string; user: string; text: string; time: string; isMine: boolean; role?: 'dj'|'vip'|'mod'; }
-
-const CHAT: ChatMsg[] = [
-  { id:'c1', user:'DJ Carlos', text:'¡Bienvenidos al Viernes Latino! 🎉🔥 Vamos a darle caña toda la noche', time:'22:15', isMine:false, role:'dj' },
-  { id:'c2', user:'María G.', text:'🔥🔥🔥 Vamos!!!', time:'22:16', isMine:false },
-  { id:'c3', user:'Pablo R.', text:'Ponme reggaetón viejo porfa!!', time:'22:17', isMine:false },
-  { id:'c4', user:'Tú', text:'Esta sesión está brutal 🙌', time:'22:18', isMine:true },
-  { id:'c5', user:'Ana L.', text:'DJ Carlos el mejor de Madrid!! ❤️', time:'22:19', isMine:false, role:'vip' },
-  { id:'c6', user:'DJ Carlos', text:'Pepas para arrancar! A mover esas caderas 💃', time:'22:20', isMine:false, role:'dj' },
-  { id:'c7', user:'Sofía T.', text:'TEMAZOOO 🎵🔥🔥', time:'22:21', isMine:false },
-  { id:'c8', user:'Diego F.', text:'Quién más está en la pista? 🕺', time:'22:22', isMine:false },
-  { id:'c9', user:'ModLaura', text:'Recordad que podéis pedir canciones 🎶', time:'22:22', isMine:false, role:'mod' },
-  { id:'c10', user:'Tú', text:'La siguiente tiene que ser Gasolina!! 🔥', time:'22:23', isMine:true },
-  { id:'c11', user:'Carlos M.', text:'Jajaja todos pidiendo reggaetón 😂😂', time:'22:24', isMine:false },
-  { id:'c12', user:'María G.', text:'¿Alguien más bailando en casa? 💃🕺', time:'22:25', isMine:false },
-];
-
-const PEOPLE = [
-  { id:'p1', name:'DJ Carlos Madrid', role:'dj' as const, on:true },
-  { id:'p2', name:'ModLaura', role:'mod' as const, on:true },
-  { id:'p3', name:'Ana López', role:'vip' as const, on:true },
-  { id:'p4', name:'María García', role:undefined, on:true },
-  { id:'p5', name:'Pablo Rodríguez', role:undefined, on:true },
-  { id:'p6', name:'Sofía Torres', role:undefined, on:true },
-  { id:'p7', name:'Diego Fernández', role:undefined, on:true },
-  { id:'p8', name:'Carlos Martín', role:undefined, on:true },
-  { id:'p9', name:'Lucía Vega', role:undefined, on:true },
-  { id:'p10', name:'Javier Hernández', role:undefined, on:false },
-];
 
 const REACTIONS = ['🔥','❤️','👏','😂','🎵'];
 
@@ -138,46 +97,49 @@ export default function SessionScreen() {
   const [deezerCache, setDeezerCache] = useState<Record<string, {preview:string, art:string}>>({});
   const audioRef = useRef<any>(null);
   const [audioPlaying, setAudioPlaying] = useState(false);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
 
-  // Play/pause Deezer preview via main button
-  const toggleAudio = useCallback(async () => {
+  // Function to fetch fresh preview URL from Deezer API
+  const playPreview = useCallback(async (title: string, artist: string) => {
     if (typeof window === 'undefined') return;
     
-    // If already playing, pause
-    if (audioRef.current && !audioRef.current.paused) {
-      audioRef.current.pause();
-      setAudioPlaying(false);
-      setPlaying(false);
-      return;
-    }
-
-    // If paused with existing audio, resume
-    if (audioRef.current && audioRef.current.src) {
-      audioRef.current.play().catch(() => {});
-      setAudioPlaying(true);
-      setPlaying(true);
-      return;
-    }
-
-    // Fetch fresh preview URL from Deezer
-    const q = encodeURIComponent(`${nowPlaying.artist} ${nowPlaying.title}`);
+    const q = encodeURIComponent(`${artist} ${title}`);
     try {
       const res = await fetch(`/api/deezer?q=${q}&type=track`);
       const data = await res.json();
       const previewUrl = data?.data?.[0]?.preview;
-      if (!previewUrl) return;
+      
+      if (!previewUrl) {
+        console.warn('No preview URL found for:', title, artist);
+        return;
+      }
 
       const AudioCtor = (globalThis as any).Audio || (window as any).Audio;
       if (!AudioCtor) return;
+      
+      // Stop current audio if playing
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      
       const audio = new AudioCtor(previewUrl);
       audio.volume = 0.8;
-      audio.addEventListener('ended', () => { setAudioPlaying(false); setPlaying(false); });
+      audio.addEventListener('ended', () => { 
+        setAudioPlaying(false); 
+        setPlaying(false); 
+      });
       audioRef.current = audio;
+      
       await audio.play();
       setAudioPlaying(true);
       setPlaying(true);
-    } catch (e) { console.error('Audio error:', e); }
-  }, [nowPlaying]);
+    } catch (e) { 
+      console.error('Audio error:', e); 
+    }
+  }, []);
+
+  // toggleAudio and skip functions defined after activeQueue/nowPlaying
 
   // Cleanup audio on unmount
   useEffect(() => () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } }, []);
@@ -284,6 +246,24 @@ export default function SessionScreen() {
     art: enrichedNow?.art || NOW.art,
   };
 
+  // Toggle audio play/pause
+  const toggleAudio = async () => {
+    if (typeof window === 'undefined') return;
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+      setPlaying(false);
+      return;
+    }
+    if (audioRef.current && audioRef.current.src) {
+      audioRef.current.play().catch(() => {});
+      setAudioPlaying(true);
+      setPlaying(true);
+      return;
+    }
+    await playPreview(nowPlaying.title, nowPlaying.artist);
+  };
+
   useEffect(() => {
     if (!playing) return;
     const i = setInterval(() => setProgress(p => p + 1/nowPlaying.duration >= 1 ? 0 : p + 1/nowPlaying.duration), 1000);
@@ -371,11 +351,11 @@ export default function SessionScreen() {
       {/* Controls */}
       <View style={s.ctrlRow}>
         <TouchableOpacity><Ionicons name="shuffle" size={24} color={colors.textMuted}/></TouchableOpacity>
-        <TouchableOpacity><Ionicons name="play-skip-back" size={28} color={colors.textPrimary}/></TouchableOpacity>
+        <TouchableOpacity onPress={skipToPrevious}><Ionicons name="play-skip-back" size={28} color={colors.textPrimary}/></TouchableOpacity>
         <TouchableOpacity style={s.playBtn} onPress={toggleAudio}>
           <Ionicons name={playing?'pause':'play'} size={32} color={colors.background}/>
         </TouchableOpacity>
-        <TouchableOpacity><Ionicons name="play-skip-forward" size={28} color={colors.textPrimary}/></TouchableOpacity>
+        <TouchableOpacity onPress={skipToNext}><Ionicons name="play-skip-forward" size={28} color={colors.textPrimary}/></TouchableOpacity>
         <TouchableOpacity><Ionicons name="repeat" size={24} color={colors.textMuted}/></TouchableOpacity>
       </View>
       {/* Reactions */}
@@ -483,7 +463,13 @@ export default function SessionScreen() {
                 <Text style={s.qMeta}>Pedida por {item.by} · {item.dur}</Text>
               </View>
               
-              {/* Preview playable via main player */}
+              {/* Small play button for individual queue items */}
+              <TouchableOpacity 
+                style={s.queuePlayBtn} 
+                onPress={() => playPreview(item.title, item.artist)}
+              >
+                <Ionicons name="play" size={16} color={colors.primary} />
+              </TouchableOpacity>
               
               <TouchableOpacity style={s.qVote} onPress={()=>vote(item.id)}>
                 <Ionicons name={v?'arrow-up-circle':'arrow-up-circle-outline'} size={26} color={v?colors.primary:colors.textMuted}/>
@@ -628,6 +614,7 @@ const s = StyleSheet.create({
   qTitle: { ...typography.bodyBold, color:colors.textPrimary, fontSize:15 },
   qArtist: { ...typography.bodySmall, color:colors.textSecondary },
   qMeta: { ...typography.caption, color:colors.textMuted },
+  queuePlayBtn: { width:32, height:32, borderRadius:16, backgroundColor:colors.primary+'20', justifyContent:'center', alignItems:'center', marginRight:spacing.sm },
   qVote: { alignItems:'center', minWidth:40 },
   qVoteN: { ...typography.captionBold, color:colors.textMuted, marginTop:2 },
   fab: { position:'absolute', bottom:spacing.base, right:spacing.base, flexDirection:'row', alignItems:'center', gap:spacing.sm, backgroundColor:colors.primary, paddingHorizontal:spacing.lg, paddingVertical:spacing.md, borderRadius:borderRadius.full, shadowColor:'#000', shadowOffset:{width:0,height:4}, shadowOpacity:0.3, shadowRadius:8, elevation:8 },
