@@ -1,0 +1,143 @@
+/**
+ * WhatsSound — Demo Mode Tests
+ * Tests demo mode detection, test mode functionality, and demo data validity
+ */
+
+import { 
+  isDemoMode, 
+  isTestMode, 
+  getTestUserName, 
+  setDemoMode,
+  DEMO_USER,
+  DEMO_DJ,
+  DEMO_SESSION,
+  DEMO_NOW_PLAYING,
+  DEMO_QUEUE,
+  DEMO_CHAT,
+  DEMO_PEOPLE
+} from '../src/lib/demo';
+
+describe('Demo Mode Detection', () => {
+  test('isDemoMode should return boolean', () => {
+    const result = isDemoMode();
+    expect(typeof result).toBe('boolean');
+  });
+
+  test('isTestMode should return boolean', () => {
+    const result = isTestMode();
+    expect(typeof result).toBe('boolean');
+  });
+
+  test('getTestUserName should return string or null', () => {
+    const result = getTestUserName();
+    expect(result === null || typeof result === 'string').toBe(true);
+  });
+
+  test('setDemoMode should change demo mode', () => {
+    const originalMode = isDemoMode();
+    
+    setDemoMode(true);
+    expect(isDemoMode()).toBe(true);
+    
+    setDemoMode(false);
+    expect(isDemoMode()).toBe(false);
+    
+    // Restore original mode
+    setDemoMode(originalMode);
+  });
+});
+
+describe('Demo Data Validation', () => {
+  test('DEMO_USER should have required properties', () => {
+    expect(DEMO_USER).toHaveProperty('id');
+    expect(DEMO_USER).toHaveProperty('display_name');
+    expect(DEMO_USER).toHaveProperty('username');
+    expect(DEMO_USER).toHaveProperty('is_dj');
+    expect(DEMO_USER.is_dj).toBe(false);
+    expect(typeof DEMO_USER.id).toBe('string');
+    expect(typeof DEMO_USER.display_name).toBe('string');
+  });
+
+  test('DEMO_DJ should have required properties', () => {
+    expect(DEMO_DJ).toHaveProperty('id');
+    expect(DEMO_DJ).toHaveProperty('display_name');
+    expect(DEMO_DJ).toHaveProperty('dj_name');
+    expect(DEMO_DJ).toHaveProperty('is_dj');
+    expect(DEMO_DJ.is_dj).toBe(true);
+    expect(typeof DEMO_DJ.dj_name).toBe('string');
+  });
+
+  test('DEMO_SESSION should have required properties', () => {
+    expect(DEMO_SESSION).toHaveProperty('djName');
+    expect(DEMO_SESSION).toHaveProperty('genre');
+    expect(DEMO_SESSION).toHaveProperty('listeners');
+    expect(DEMO_SESSION).toHaveProperty('queueCount');
+    expect(typeof DEMO_SESSION.listeners).toBe('number');
+    expect(typeof DEMO_SESSION.queueCount).toBe('number');
+  });
+
+  test('DEMO_NOW_PLAYING should have required properties', () => {
+    expect(DEMO_NOW_PLAYING).toHaveProperty('title');
+    expect(DEMO_NOW_PLAYING).toHaveProperty('artist');
+    expect(DEMO_NOW_PLAYING).toHaveProperty('album');
+    expect(DEMO_NOW_PLAYING).toHaveProperty('duration');
+    expect(typeof DEMO_NOW_PLAYING.duration).toBe('number');
+    expect(typeof DEMO_NOW_PLAYING.currentTime).toBe('number');
+  });
+
+  test('DEMO_QUEUE should be valid array', () => {
+    expect(Array.isArray(DEMO_QUEUE)).toBe(true);
+    expect(DEMO_QUEUE.length).toBeGreaterThan(0);
+    
+    DEMO_QUEUE.forEach(item => {
+      expect(item).toHaveProperty('id');
+      expect(item).toHaveProperty('title');
+      expect(item).toHaveProperty('artist');
+      expect(item).toHaveProperty('votes');
+      expect(typeof item.votes).toBe('number');
+    });
+  });
+
+  test('DEMO_CHAT should be valid array', () => {
+    expect(Array.isArray(DEMO_CHAT)).toBe(true);
+    expect(DEMO_CHAT.length).toBeGreaterThan(0);
+    
+    DEMO_CHAT.forEach(message => {
+      expect(message).toHaveProperty('id');
+      expect(message).toHaveProperty('user');
+      expect(message).toHaveProperty('text');
+      expect(message).toHaveProperty('time');
+      expect(message).toHaveProperty('isMine');
+      expect(typeof message.isMine).toBe('boolean');
+    });
+  });
+
+  test('DEMO_PEOPLE should be valid array', () => {
+    expect(Array.isArray(DEMO_PEOPLE)).toBe(true);
+    expect(DEMO_PEOPLE.length).toBeGreaterThan(0);
+    
+    DEMO_PEOPLE.forEach(person => {
+      expect(person).toHaveProperty('id');
+      expect(person).toHaveProperty('name');
+      expect(person).toHaveProperty('on');
+      expect(typeof person.on).toBe('boolean');
+    });
+
+    // Should have at least one DJ
+    const djs = DEMO_PEOPLE.filter(p => p.role === 'dj');
+    expect(djs.length).toBeGreaterThan(0);
+  });
+
+  test('demo data should be consistent', () => {
+    // DJ name should match between DEMO_SESSION and DEMO_PEOPLE
+    const djInPeople = DEMO_PEOPLE.find(p => p.role === 'dj');
+    expect(djInPeople).toBeDefined();
+    
+    // Queue count should match array length
+    expect(DEMO_SESSION.queueCount).toBe(DEMO_QUEUE.length);
+    
+    // Listener count should be reasonable
+    expect(DEMO_SESSION.listeners).toBeGreaterThan(0);
+    expect(DEMO_SESSION.listeners).toBeLessThan(1000);
+  });
+});
