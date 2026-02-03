@@ -1,25 +1,157 @@
 /**
  * WhatsSound — Detalle de Canción
- * Referencia: 19-detalle-cancion.png
- * Carátula grande, stats, barra progreso, votar/propina/spotify, comentarios
+ * Conectado a Supabase
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
+import { supabase } from '../../src/lib/supabase';
+import { isTestMode, getOrCreateTestUser } from '../../src/lib/demo';
 
-const COMMENTS = [
-  { name: 'Carlos M.', color: '#FF5722', text: 'Temazo!! 🔥🔥', time: 'hace 2 min' },
-  { name: 'Ana R.', color: '#009688', text: 'Súbele volumen porfa 🙏', time: 'hace 5 min' },
-  { name: 'Laura G.', color: '#E91E63', text: 'La pedí yo! 🎉', time: 'hace 8 min' },
-];
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  cover_url?: string;
+  duration_ms?: number;
+  votes: number;
+  status: string;
+  external_id?: string;
+  deezer_id?: number;
+  requested_by?: { display_name: string };
+}
 
 export default function SongDetailScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ songId?: string; sessionId?: string }>();
+  const [loading, setLoading] = useState(true);
+  const [song, setSong] = useState<Song | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [tipCount, setTipCount] = useState(0);
+  const [userId, setUserId] = useState<string>('');
+
+  // Obtener user id
+  useEffect(() => {
+    (async () => {
+      if (isTestMode()) {
+        const testProfile = await getOrCreateTestUser();
+        if (testProfile) setUserId(testProfile.id);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) setUserId(user.id);
+      }
+    })();
+  }, []);
+
+  // Cargar canción
+  useEffect(() => {
+    if (!params.songId) {
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      const { data, error } = await supabase
+        .from('ws_songs')
+        .select(`
+          *,
+          requested_by:ws_profiles!user_id(display_name)
+        `)
+        .eq('id', params.songId)
+        .single();
+
+      if (!error && data) {
+        setSong(data as Song);
+
+        // Contar propinas para esta canción
+        const { count } = await supabase
+          .from('ws_tips')
+          .select('*', { count: 'exact', head: true })
+          .eq('song_id', params.songId);
+        setTipCount(count || 0);
+
+        // Verificar si el usuario ya votó
+        if (userId) {
+          const { data: vote } = await supabase
+            .from('ws_votes')
+            .select('id')
+            .eq('song_id', params.songId)
+            .eq('user_id', userId)
+            .maybeSingle();
+          setHasVoted(!!vote);
+        }
+      }
+      setLoading(false);
+    })();
+  }, [params.songId, userId]);
+
+  const handleVote = async () => {
+    if (!song || !userId) return;
+
+    // Toggle vote
+    if (hasVoted) {
+      await supabase
+        .from('ws_votes')
+        .delete()
+        .eq('song_id', song.id)
+        .eq('user_id', userId);
+      setSong({ ...song, votes: song.votes - 1 });
+    } else {
+      await supabase
+        .from('ws_votes')
+        .insert({ song_id: song.id, user_id: userId, session_id: params.sessionId });
+      setSong({ ...song, votes: song.votes + 1 });
+    }
+    setHasVoted(!hasVoted);
+  };
+
+  const handleTip = () => {
+    router.push({
+      pathname: '/session/send-tip',
+      params: { sessionId: params.sessionId, songId: params.songId },
+    } as any);
+  };
+
+  const handleOpenSpotify = () => {
+    if (song?.title && song?.artist) {
+      const query = encodeURIComponent(`${song.title} ${song.artist}`);
+      Linking.openURL(`https://open.spotify.com/search/${query}`);
+    }
+  };
+
+  const formatDuration = (ms?: number) => {
+    if (!ms) return '0:00';
+    const mins = Math.floor(ms / 60000);
+    const secs = Math.floor((ms % 60000) / 1000);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (loading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!song) {
+    return (
+      <View style={s.container}>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={s.headerTitle}>Canción no encontrada</Text>
+          <View style={{ width: 22 }} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={s.container}>
@@ -33,63 +165,64 @@ export default function SongDetailScreen() {
 
       <ScrollView contentContainerStyle={s.content}>
         {/* Album art */}
-        <View style={s.albumArt}>
-          <Ionicons name="musical-notes" size={64} color="rgba(255,255,255,0.5)" />
-        </View>
+        {song.cover_url ? (
+          <Image source={{ uri: song.cover_url }} style={s.albumArt} />
+        ) : (
+          <View style={[s.albumArt, { backgroundColor: colors.primary }]}>
+            <Ionicons name="musical-notes" size={64} color="rgba(255,255,255,0.5)" />
+          </View>
+        )}
 
         {/* Song info */}
-        <Text style={s.title}>Dakiti</Text>
-        <Text style={s.artist}>Bad Bunny, Jhay Cortez</Text>
+        <Text style={s.title}>{song.title}</Text>
+        <Text style={s.artist}>{song.artist}</Text>
+
+        {/* Status badge */}
+        {song.status === 'playing' && (
+          <View style={s.statusBadge}>
+            <View style={s.statusDot} />
+            <Text style={s.statusText}>Sonando ahora</Text>
+          </View>
+        )}
 
         {/* Stats */}
         <View style={s.statsRow}>
-          <Text style={s.stat}>👍 12 votos</Text>
-          <Text style={s.stat}>💰 2 propinas</Text>
-          <Text style={s.stat}>👤 Laura G.</Text>
+          <Text style={s.stat}>👍 {song.votes} votos</Text>
+          <Text style={s.stat}>💰 {tipCount} propinas</Text>
+          <Text style={s.stat}>👤 {song.requested_by?.display_name || 'Usuario'}</Text>
         </View>
 
-        {/* Progress bar */}
-        <View style={s.progressContainer}>
-          <View style={s.progressTrack}>
-            <View style={[s.progressFill, { width: '36%' }]} />
-          </View>
-          <View style={s.progressTimes}>
-            <Text style={s.timeText}>1:12</Text>
-            <Text style={s.timeText}>3:25</Text>
-          </View>
-        </View>
+        {/* Duration */}
+        {song.duration_ms && (
+          <Text style={s.duration}>Duración: {formatDuration(song.duration_ms)}</Text>
+        )}
 
         {/* Action buttons */}
         <View style={s.actionsRow}>
-          <TouchableOpacity style={[s.actionBtn, { backgroundColor: colors.primary }]}>
-            <Ionicons name="thumbs-up" size={20} color="#fff" />
-            <Text style={s.actionText}>Votar</Text>
+          <TouchableOpacity 
+            style={[s.actionBtn, hasVoted ? { backgroundColor: colors.primary } : { backgroundColor: colors.surfaceLight }]}
+            onPress={handleVote}
+          >
+            <Ionicons name={hasVoted ? 'thumbs-up' : 'thumbs-up-outline'} size={20} color={hasVoted ? '#fff' : colors.primary} />
+            <Text style={[s.actionText, !hasVoted && { color: colors.primary }]}>
+              {hasVoted ? 'Votada' : 'Votar'}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.actionBtn, { backgroundColor: colors.warning + '30' }]}>
+          <TouchableOpacity 
+            style={[s.actionBtn, { backgroundColor: colors.warning + '30' }]}
+            onPress={handleTip}
+          >
             <Ionicons name="cash" size={20} color={colors.warning} />
             <Text style={[s.actionText, { color: colors.warning }]}>Propina</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.actionBtn, { backgroundColor: colors.surfaceLight }]}>
-            <Ionicons name="headset" size={20} color={colors.primary} />
-            <Text style={[s.actionText, { color: colors.primary }]}>Spotify</Text>
+          <TouchableOpacity 
+            style={[s.actionBtn, { backgroundColor: '#1DB954' + '30' }]}
+            onPress={handleOpenSpotify}
+          >
+            <Ionicons name="play-circle" size={20} color="#1DB954" />
+            <Text style={[s.actionText, { color: '#1DB954' }]}>Spotify</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Comments */}
-        <View style={s.divider} />
-        <Text style={s.commentsTitle}>Comentarios (3)</Text>
-        {COMMENTS.map((c, i) => (
-          <View key={i} style={s.commentRow}>
-            <View style={[s.commentAvatar, { backgroundColor: c.color }]}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>{c.name[0]}</Text>
-            </View>
-            <View style={[s.commentBubble, { backgroundColor: c.color + '25' }]}>
-              <Text style={s.commentName}>{c.name}</Text>
-              <Text style={s.commentText}>{c.text}</Text>
-              <Text style={s.commentTime}>{c.time}</Text>
-            </View>
-          </View>
-        ))}
       </ScrollView>
     </View>
   );
@@ -104,28 +237,26 @@ const s = StyleSheet.create({
     width: 240, height: 240, borderRadius: borderRadius.xl,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: spacing.lg,
-    // Gradient-like background
-    backgroundColor: '#9C27B0',
-    shadowColor: '#9C27B0', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16,
   },
-  title: { ...typography.h2, color: colors.textPrimary, fontSize: 22 },
-  artist: { ...typography.body, color: colors.textSecondary, fontSize: 15, marginBottom: spacing.md },
-  statsRow: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.lg },
+  title: { ...typography.h2, color: colors.textPrimary, fontSize: 22, textAlign: 'center' },
+  artist: { ...typography.body, color: colors.textSecondary, fontSize: 15, marginBottom: spacing.sm, textAlign: 'center' },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary + '20',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: borderRadius.full,
+    marginBottom: spacing.md,
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  statusText: { ...typography.captionBold, color: colors.primary, fontSize: 12 },
+  statsRow: { flexDirection: 'row', gap: spacing.lg, marginBottom: spacing.sm },
   stat: { ...typography.caption, color: colors.textMuted, fontSize: 12 },
-  progressContainer: { width: '100%', marginBottom: spacing.lg },
-  progressTrack: { height: 4, backgroundColor: colors.surfaceLight, borderRadius: 2 },
-  progressFill: { height: 4, backgroundColor: colors.accent, borderRadius: 2 },
-  progressTimes: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-  timeText: { ...typography.caption, color: colors.textMuted, fontSize: 11 },
+  duration: { ...typography.caption, color: colors.textMuted, fontSize: 12, marginBottom: spacing.lg },
   actionsRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   actionBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: borderRadius.full, alignItems: 'center', gap: 4 },
   actionText: { ...typography.captionBold, color: '#fff', fontSize: 12 },
-  divider: { width: '100%', height: 1, backgroundColor: colors.border, marginBottom: spacing.md },
-  commentsTitle: { ...typography.bodyBold, color: colors.textSecondary, fontSize: 14, alignSelf: 'flex-start', marginBottom: spacing.md },
-  commentRow: { flexDirection: 'row', gap: spacing.sm, alignSelf: 'flex-start', marginBottom: spacing.sm },
-  commentAvatar: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  commentBubble: { borderRadius: borderRadius.lg, padding: spacing.sm, paddingHorizontal: spacing.md, maxWidth: '80%' },
-  commentName: { ...typography.captionBold, color: colors.primary, fontSize: 12 },
-  commentText: { ...typography.bodySmall, color: colors.textPrimary, fontSize: 14 },
-  commentTime: { ...typography.caption, color: colors.textMuted, fontSize: 10, marginTop: 2 },
 });
