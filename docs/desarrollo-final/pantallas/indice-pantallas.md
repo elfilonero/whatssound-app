@@ -19,21 +19,21 @@
 
 | # | Pantalla | Estado | Notas |
 |---|----------|--------|-------|
-| 2.1 | Landing — En Vivo | ✅ | `ws-landing.html` — Lista de sesiones activas, FAB crear/escanear |
-| 2.2 | Landing — Grupos | ⬜ | Grupos de chat musical (futuro) |
-| 2.3 | Landing — Llamadas | ⬜ | Historial de sesiones pasadas / llamadas |
+| 2.1 | Landing — En Vivo | ✅ | `app/(tabs)/live.tsx` — Sesiones activas, conectado a Supabase |
+| 2.2 | Landing — Chats | ✅ | `app/(tabs)/index.tsx` — Chat privado tipo WhatsApp (v2) |
+| 2.3 | Landing — Grupos | ✅ | `app/(tabs)/groups.tsx` — Grupos musicales |
 | 2.4 | Escanear QR | ⬜ | Cámara + scanner overlay |
-| 2.5 | Crear Nueva Sesión | ⬜ | Modal/pantalla: nombre, género, foto, config |
-| 2.6 | Buscar Sesiones | ⬜ | Search con filtros (género, cercanía, popularidad) |
+| 2.5 | Crear Nueva Sesión | ✅ | `app/session/create.tsx` — Crear sesión |
+| 2.6 | Descubrir | ✅ | `app/(tabs)/discover.tsx` — Sesiones populares, DJs, géneros |
 
 ## 3. Sesión — Vista Usuario
 
 | # | Pantalla | Estado | Notas |
 |---|----------|--------|-------|
-| 3.1 | Sesión — Reproductor | ✅ | `ws-session-player.html` — Portada grande, reacciones, barra progreso |
-| 3.2 | Sesión — Chat | ✅ | `ws-session-chat.html` — Burbujas, badges, menciones, waveform |
-| 3.3 | Sesión — Cola (User) | ✅ | `ws-user-cola.html` — Ranking, medallas, votos, propinas, pedir canción |
-| 3.4 | Sesión — Gente (User) | ✅ | `ws-user-gente.html` — Lista usuarios, roles, stats, invitar |
+| 3.1 | Sesión — Reproductor | ✅ | `app/session/[id].tsx` — **Audio funcional** (Deezer 30s), reacciones, progreso |
+| 3.2 | Sesión — Chat | ✅ | `app/session/[id].tsx` — Burbujas WhatsApp, badges DJ/VIP/MOD, realtime |
+| 3.3 | Sesión — Cola (User) | ✅ | `app/session/[id].tsx` — Ranking, medallas 🥇🥈🥉, votos, pedir canción |
+| 3.4 | Sesión — Gente (User) | ✅ | `app/session/[id].tsx` — Lista usuarios, roles, online/offline |
 | 3.5 | Pedir Canción (modal) | ⬜ | Búsqueda en Spotify + preview + confirmar |
 | 3.6 | Detalle de Canción | ⬜ | Info completa, quién la pidió, votos, abrir en Spotify |
 | 3.7 | Perfil de Usuario (modal) | ⬜ | Avatar, nombre, stats, acciones (mensaje, VIP, silenciar) |
@@ -43,10 +43,10 @@
 
 | # | Pantalla | Estado | Notas |
 |---|----------|--------|-------|
-| 4.1 | Panel DJ | ✅ | `ws-dj-panel.html` — Stats, acciones rápidas, preview chat |
-| 4.2 | DJ — Cola | ✅ | `ws-dj-cola.html` — Drag reorder, aprobar/rechazar, AutoDJ, sorpresa |
-| 4.3 | DJ — Gente | ✅ | `ws-dj-gente.html` — Moderación, dar VIP, silenciar, expulsar |
-| 4.4 | DJ — Config | ✅ | `ws-dj-config.html` — Nombre, género, permisos, propinas, cerrar |
+| 4.1 | Panel DJ | ✅ | `app/session/dj-panel.tsx` — Stats, controles, chat preview, IA |
+| 4.2 | DJ — Cola | ✅ | `app/session/dj-queue.tsx` — Aprobar/rechazar, reorder |
+| 4.3 | DJ — Gente | ✅ | `app/session/dj-people.tsx` — Moderación, VIP, silenciar |
+| 4.4 | DJ — Config | ✅ | Incluido en dj-panel — Nombre, género, permisos |
 | 4.5 | DJ — Anunciar (modal) | ⬜ | Enviar mensaje destacado a todos |
 | 4.6 | DJ — Stats detalladas | ⬜ | Gráficas: oyentes/tiempo, canciones más votadas, propinas |
 
@@ -101,12 +101,12 @@
 
 ---
 
-## Resumen
+## Resumen (actualizado v2 — 3 Feb 2026)
 
 | Categoría | Hechas | Pendientes | Total |
 |-----------|--------|------------|-------|
 | Onboarding | 0 | 6 | 6 |
-| Landing / Home | 1 | 5 | 6 |
+| Landing / Home | 5 | 1 | 6 |
 | Sesión Usuario | 4 | 4 | 8 |
 | Sesión DJ | 4 | 2 | 6 |
 | Compartir | 1 | 1 | 2 |
@@ -114,6 +114,9 @@
 | Propinas | 0 | 3 | 3 |
 | Notificaciones | 0 | 2 | 2 |
 | Extras | 0 | 5 | 5 |
-| **TOTAL** | **20** | **30** | **50** |
+| **Dashboard Admin** | **10** | **0** | **10** |
+| **TOTAL** | **34** | **26** | **60** |
 
-> **20 pantallas completadas (40%)** — 30 pendientes para cobertura completa.
+> **34 pantallas completadas (57%)** — incluye 10 pantallas admin nuevas (v2).
+> Dashboard admin: Overview, Usuarios, Sesiones, Chat IA, Engagement, Revenue, Alertas, Config, Health, Sidebar.
+> Audio funcional: reproductor suena con Deezer preview 30s. ✅
