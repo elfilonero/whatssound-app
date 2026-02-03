@@ -1,16 +1,17 @@
 /**
  * WhatsSound — Centro de Notificaciones / Actividad
- * Referencia: 29-centro-notificaciones.png
- * Tabs: Todo, Sesiones, Propinas, Menciones
+ * Conectado a Supabase - deriva notificaciones de eventos
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, borderRadius } from '../src/theme/spacing';
+import { supabase } from '../src/lib/supabase';
+import { isTestMode, getOrCreateTestUser } from '../src/lib/demo';
 
 type NotifType = 'session' | 'song' | 'tip' | 'mention' | 'join' | 'rating';
 
@@ -18,43 +19,193 @@ interface Notif {
   id: string;
   type: NotifType;
   text: string;
-  bold: string[];
   time: string;
   unread: boolean;
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   iconBg: string;
+  sessionId?: string;
 }
-
-const NOTIFS: Notif[] = [
-  { id:'1', type:'session', text:'DJ Marcos inició sesión Viernes Latino 🔥', bold:['DJ Marcos','Viernes Latino'], time:'Hace 2 min', unread:true, icon:'headset', iconColor:'#A78BFA', iconBg:'#A78BFA18' },
-  { id:'2', type:'song', text:'Tu canción Pepas va a sonar 🎵 ¡Prepárate!', bold:['Pepas'], time:'Hace 5 min', unread:true, icon:'musical-notes', iconColor:colors.primary, iconBg:colors.primary+'18' },
-  { id:'3', type:'tip', text:'Laura te dio propina €5 🙌', bold:['Laura'], time:'Hace 15 min', unread:true, icon:'cash', iconColor:colors.warning, iconBg:colors.warning+'18' },
-  { id:'4', type:'mention', text:'Te mencionaron en Viernes Latino: "@marcos ponla de nuevo!"', bold:['Viernes Latino'], time:'Hace 30 min', unread:false, icon:'chatbubble', iconColor:colors.textSecondary, iconBg:colors.surfaceLight },
-  { id:'5', type:'session', text:'DJ Sara inició sesión Techno Nights', bold:['DJ Sara','Techno Nights'], time:'Hace 1h', unread:false, icon:'headset', iconColor:'#A78BFA', iconBg:'#A78BFA18' },
-  { id:'6', type:'join', text:'Carlos se unió a tu sesión Chill Vibes', bold:['Carlos','Chill Vibes'], time:'Hace 2h', unread:false, icon:'people', iconColor:colors.accent, iconBg:colors.accent+'18' },
-  { id:'7', type:'rating', text:'Pedro te valoró con 5★ en Reggaeton Mix', bold:['Pedro','Reggaeton Mix'], time:'Hace 3h', unread:false, icon:'star', iconColor:colors.warning, iconBg:colors.warning+'18' },
-  { id:'8', type:'tip', text:'Ana te dio propina €2', bold:['Ana'], time:'Ayer', unread:false, icon:'cash', iconColor:colors.warning, iconBg:colors.warning+'18' },
-  { id:'9', type:'song', text:'Tu canción Yandel 150 sonó en Sábado Mix', bold:['Yandel 150','Sábado Mix'], time:'Ayer', unread:false, icon:'musical-note', iconColor:colors.primary, iconBg:colors.primary+'18' },
-];
 
 const TABS = [
   { key: 'all', label: 'Todo' },
   { key: 'session', label: 'Sesiones' },
   { key: 'tip', label: 'Propinas' },
-  { key: 'mention', label: 'Menciones' },
+  { key: 'song', label: 'Canciones' },
 ] as const;
+
+function timeAgo(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Ahora';
+  if (mins < 60) return `Hace ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Ayer';
+  return `Hace ${days} días`;
+}
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<Notif[]>([]);
+  const [userId, setUserId] = useState<string>('');
 
-  const filtered = tab === 'all' ? NOTIFS : NOTIFS.filter(n => n.type === tab);
+  // Cargar notificaciones derivadas de eventos
+  useEffect(() => {
+    (async () => {
+      let uid = '';
+      if (isTestMode()) {
+        const testProfile = await getOrCreateTestUser();
+        if (testProfile) uid = testProfile.id;
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) uid = user.id;
+      }
 
-  const renderText = (notif: Notif) => {
-    // Simple bold rendering - just return plain text for now
-    return <Text style={s.notifText}>{notif.text}</Text>;
-  };
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
+
+      setUserId(uid);
+      const notifs: Notif[] = [];
+
+      // 1. Propinas recibidas (si soy DJ)
+      const { data: tips } = await supabase
+        .from('ws_tips')
+        .select(`
+          id, amount, created_at,
+          from_user:ws_profiles!from_user_id(display_name),
+          session:ws_sessions(name)
+        `)
+        .eq('to_user_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (tips) {
+        for (const tip of tips) {
+          notifs.push({
+            id: `tip-${tip.id}`,
+            type: 'tip',
+            text: `${(tip.from_user as any)?.display_name || 'Alguien'} te dio propina €${tip.amount}`,
+            time: timeAgo(new Date(tip.created_at)),
+            unread: false,
+            icon: 'cash',
+            iconColor: colors.warning,
+            iconBg: colors.warning + '18',
+            sessionId: (tip.session as any)?.id,
+          });
+        }
+      }
+
+      // 2. Sesiones donde DJ inició (si sigo al DJ)
+      const { data: recentSessions } = await supabase
+        .from('ws_sessions')
+        .select(`
+          id, name, created_at,
+          dj:ws_profiles!dj_id(display_name, dj_name)
+        `)
+        .eq('status', 'live')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentSessions) {
+        for (const session of recentSessions) {
+          const djName = (session.dj as any)?.dj_name || (session.dj as any)?.display_name || 'Un DJ';
+          notifs.push({
+            id: `session-${session.id}`,
+            type: 'session',
+            text: `${djName} inició sesión ${session.name}`,
+            time: timeAgo(new Date(session.created_at)),
+            unread: false,
+            icon: 'headset',
+            iconColor: '#A78BFA',
+            iconBg: '#A78BFA18',
+            sessionId: session.id,
+          });
+        }
+      }
+
+      // 3. Mis canciones que sonaron
+      const { data: playedSongs } = await supabase
+        .from('ws_songs')
+        .select(`
+          id, title, created_at, status,
+          session:ws_sessions(name)
+        `)
+        .eq('user_id', uid)
+        .eq('status', 'played')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (playedSongs) {
+        for (const song of playedSongs) {
+          notifs.push({
+            id: `song-${song.id}`,
+            type: 'song',
+            text: `Tu canción ${song.title} sonó en ${(song.session as any)?.name || 'una sesión'}`,
+            time: timeAgo(new Date(song.created_at)),
+            unread: false,
+            icon: 'musical-notes',
+            iconColor: colors.primary,
+            iconBg: colors.primary + '18',
+          });
+        }
+      }
+
+      // 4. Valoraciones recibidas (si soy DJ)
+      const { data: ratings } = await supabase
+        .from('ws_session_ratings')
+        .select(`
+          id, rating, created_at,
+          user:ws_profiles!user_id(display_name),
+          session:ws_sessions(name)
+        `)
+        .eq('dj_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (ratings) {
+        for (const r of ratings) {
+          notifs.push({
+            id: `rating-${r.id}`,
+            type: 'rating' as NotifType,
+            text: `${(r.user as any)?.display_name || 'Alguien'} te valoró con ${r.rating}★ en ${(r.session as any)?.name || 'una sesión'}`,
+            time: timeAgo(new Date(r.created_at)),
+            unread: false,
+            icon: 'star',
+            iconColor: colors.warning,
+            iconBg: colors.warning + '18',
+          });
+        }
+      }
+
+      // Ordenar por fecha más reciente (parsear time)
+      notifs.sort((a, b) => {
+        // Simple sort - más reciente primero
+        if (a.time === 'Ahora') return -1;
+        if (b.time === 'Ahora') return 1;
+        return 0;
+      });
+
+      setNotifications(notifs);
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = tab === 'all' ? notifications : notifications.filter(n => n.type === tab);
+
+  if (loading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={s.container}>
@@ -74,18 +225,35 @@ export default function NotificationsScreen() {
 
       {/* List */}
       <ScrollView contentContainerStyle={s.list}>
-        {filtered.map(notif => (
-          <TouchableOpacity key={notif.id} style={s.notifRow} activeOpacity={0.7}>
-            <View style={[s.notifIcon, { backgroundColor: notif.iconBg }]}>
-              <Ionicons name={notif.icon} size={20} color={notif.iconColor} />
-            </View>
-            <View style={{ flex: 1 }}>
-              {renderText(notif)}
-              <Text style={s.notifTime}>{notif.time}</Text>
-            </View>
-            {notif.unread && <View style={s.unreadDot} />}
-          </TouchableOpacity>
-        ))}
+        {filtered.length > 0 ? (
+          filtered.map(notif => (
+            <TouchableOpacity 
+              key={notif.id} 
+              style={s.notifRow} 
+              activeOpacity={0.7}
+              onPress={() => {
+                if (notif.sessionId) {
+                  router.push({ pathname: '/session/queue', params: { sessionId: notif.sessionId } } as any);
+                }
+              }}
+            >
+              <View style={[s.notifIcon, { backgroundColor: notif.iconBg }]}>
+                <Ionicons name={notif.icon} size={20} color={notif.iconColor} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.notifText}>{notif.text}</Text>
+                <Text style={s.notifTime}>{notif.time}</Text>
+              </View>
+              {notif.unread && <View style={s.unreadDot} />}
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={s.empty}>
+            <Ionicons name="notifications-outline" size={48} color={colors.textMuted} />
+            <Text style={s.emptyTitle}>Sin actividad</Text>
+            <Text style={s.emptySubtitle}>Tus notificaciones aparecerán aquí</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -108,4 +276,7 @@ const s = StyleSheet.create({
   notifText: { ...typography.bodySmall, color: colors.textPrimary, fontSize: 14, lineHeight: 20 },
   notifTime: { ...typography.caption, color: colors.textMuted, fontSize: 12, marginTop: 2 },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  empty: { alignItems: 'center', paddingVertical: spacing['4xl'], gap: spacing.sm },
+  emptyTitle: { ...typography.h3, color: colors.textSecondary },
+  emptySubtitle: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
 });
