@@ -381,11 +381,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_profiles_updated ON ws_profiles
-BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER trg_profiles_updated
+BEFORE UPDATE ON ws_profiles
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE TRIGGER trg_settings_updated ON ws_user_settings
-BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER trg_settings_updated
+BEFORE UPDATE ON ws_user_settings
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-CREATE TRIGGER trg_now_playing_updated ON ws_now_playing
-BEFORE UPDATE FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER trg_now_playing_updated
+BEFORE UPDATE ON ws_now_playing
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
