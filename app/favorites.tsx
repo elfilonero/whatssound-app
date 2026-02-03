@@ -1,36 +1,125 @@
 /**
  * WhatsSound — Favoritos / Guardados
- * Referencia: 32-favoritos.png
- * Canciones votadas, sesiones guardadas
+ * Conectado a Supabase
  */
 
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme/colors';
 import { typography } from '../src/theme/typography';
 import { spacing, borderRadius } from '../src/theme/spacing';
+import { supabase } from '../src/lib/supabase';
+import { isTestMode, getOrCreateTestUser } from '../src/lib/demo';
 
 const COLORS = ['#E91E63', '#00BCD4', '#FF9800', '#3F51B5', '#009688', '#9C27B0'];
 
-const FAV_SONGS = [
-  { title: 'Dakiti', artist: 'Bad Bunny, Jhay Cortez', session: 'Viernes Latino', votes: 24 },
-  { title: 'Pepas', artist: 'Farruko', session: 'Reggaeton Mix', votes: 18 },
-  { title: 'Titi Me Preguntó', artist: 'Bad Bunny', session: 'Viernes Latino', votes: 15 },
-  { title: 'La Noche de Anoche', artist: 'Bad Bunny, Rosalía', session: 'Chill Sunday', votes: 12 },
-  { title: 'Yonaguni', artist: 'Bad Bunny', session: 'Techno Nights', votes: 9 },
-];
+interface FavSong {
+  id: string;
+  title: string;
+  artist: string;
+  session: string;
+  votes: number;
+}
 
-const SAVED_SESSIONS = [
-  { name: 'Viernes Latino 🔥', dj: 'DJ Carlos Madrid', listeners: 47 },
-  { name: 'Chill & Study Beats', dj: 'Luna DJ', listeners: 203 },
-  { name: 'Deep House Sunset', dj: 'Sarah B', listeners: 128 },
-];
+interface SavedSession {
+  id: string;
+  name: string;
+  dj: string;
+  listeners: number;
+}
 
 export default function FavoritesScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<'songs' | 'sessions'>('songs');
+  const [loading, setLoading] = useState(true);
+  const [songs, setSongs] = useState<FavSong[]>([]);
+  const [sessions, setSessions] = useState<SavedSession[]>([]);
+  const [userId, setUserId] = useState<string>('');
+
+  // Cargar favoritos
+  useEffect(() => {
+    (async () => {
+      let uid = '';
+      if (isTestMode()) {
+        const testProfile = await getOrCreateTestUser();
+        if (testProfile) uid = testProfile.id;
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) uid = user.id;
+      }
+
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
+
+      setUserId(uid);
+
+      // Cargar canciones votadas por el usuario
+      const { data: votedSongs } = await supabase
+        .from('ws_votes')
+        .select(`
+          song:ws_songs(id, title, artist, votes, session:ws_sessions(name))
+        `)
+        .eq('user_id', uid)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (votedSongs) {
+        setSongs(votedSongs.map((v: any) => ({
+          id: v.song?.id || '',
+          title: v.song?.title || 'Sin título',
+          artist: v.song?.artist || 'Desconocido',
+          session: v.song?.session?.name || 'Sesión',
+          votes: v.song?.votes || 0,
+        })).filter((s: FavSong) => s.id));
+      }
+
+      // Cargar sesiones guardadas (donde participó)
+      const { data: joinedSessions } = await supabase
+        .from('ws_session_members')
+        .select(`
+          session:ws_sessions(id, name, dj:ws_profiles!dj_id(display_name, dj_name))
+        `)
+        .eq('user_id', uid)
+        .order('joined_at', { ascending: false })
+        .limit(20);
+
+      if (joinedSessions) {
+        const uniqueSessions = new Map<string, SavedSession>();
+        for (const m of joinedSessions) {
+          if (m.session && !uniqueSessions.has(m.session.id)) {
+            // Contar miembros actuales
+            const { count } = await supabase
+              .from('ws_session_members')
+              .select('*', { count: 'exact', head: true })
+              .eq('session_id', m.session.id)
+              .is('left_at', null);
+
+            uniqueSessions.set(m.session.id, {
+              id: m.session.id,
+              name: m.session.name,
+              dj: (m.session.dj as any)?.dj_name || (m.session.dj as any)?.display_name || 'DJ',
+              listeners: count || 0,
+            });
+          }
+        }
+        setSessions(Array.from(uniqueSessions.values()));
+      }
+
+      setLoading(false);
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={s.container}>
@@ -44,44 +133,63 @@ export default function FavoritesScreen() {
 
       <View style={s.tabs}>
         <TouchableOpacity style={[s.tab, tab === 'songs' && s.tabActive]} onPress={() => setTab('songs')}>
-          <Text style={[s.tabText, tab === 'songs' && s.tabTextActive]}>🎵 Canciones</Text>
+          <Text style={[s.tabText, tab === 'songs' && s.tabTextActive]}>🎵 Canciones ({songs.length})</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.tab, tab === 'sessions' && s.tabActive]} onPress={() => setTab('sessions')}>
-          <Text style={[s.tabText, tab === 'sessions' && s.tabTextActive]}>📡 Sesiones</Text>
+          <Text style={[s.tabText, tab === 'sessions' && s.tabTextActive]}>📡 Sesiones ({sessions.length})</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={s.list}>
-        {tab === 'songs' ? FAV_SONGS.map((song, i) => (
-          <View key={i} style={s.songRow}>
-            <View style={[s.albumArt, { backgroundColor: COLORS[i % COLORS.length] }]}>
-              <Ionicons name="musical-notes" size={16} color="rgba(255,255,255,0.7)" />
+      <ScrollView contentContainerStyle={s.content}>
+        {tab === 'songs' ? (
+          songs.length > 0 ? (
+            songs.map((song, i) => (
+              <TouchableOpacity key={song.id} style={s.card}>
+                <View style={[s.cardIcon, { backgroundColor: COLORS[i % COLORS.length] + '20' }]}>
+                  <Ionicons name="musical-notes" size={20} color={COLORS[i % COLORS.length]} />
+                </View>
+                <View style={s.cardInfo}>
+                  <Text style={s.cardTitle} numberOfLines={1}>{song.title}</Text>
+                  <Text style={s.cardSubtitle} numberOfLines={1}>{song.artist}</Text>
+                  <Text style={s.cardMeta}>🎧 {song.session} · 👍 {song.votes}</Text>
+                </View>
+                <Ionicons name="heart" size={20} color={colors.error} />
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={s.empty}>
+              <Ionicons name="musical-notes-outline" size={48} color={colors.textMuted} />
+              <Text style={s.emptyTitle}>Sin canciones favoritas</Text>
+              <Text style={s.emptySubtitle}>Las canciones que votes aparecerán aquí</Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.songTitle}>{song.title}</Text>
-              <Text style={s.songArtist}>{song.artist}</Text>
-              <Text style={s.songSession}>En: {song.session}</Text>
+          )
+        ) : (
+          sessions.length > 0 ? (
+            sessions.map((session, i) => (
+              <TouchableOpacity 
+                key={session.id} 
+                style={s.card}
+                onPress={() => router.push({ pathname: '/session/queue', params: { sessionId: session.id } } as any)}
+              >
+                <View style={[s.cardIcon, { backgroundColor: COLORS[i % COLORS.length] + '20' }]}>
+                  <Ionicons name="radio" size={20} color={COLORS[i % COLORS.length]} />
+                </View>
+                <View style={s.cardInfo}>
+                  <Text style={s.cardTitle} numberOfLines={1}>{session.name}</Text>
+                  <Text style={s.cardSubtitle} numberOfLines={1}>🎧 {session.dj}</Text>
+                  <Text style={s.cardMeta}>👥 {session.listeners} escuchando</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={s.empty}>
+              <Ionicons name="radio-outline" size={48} color={colors.textMuted} />
+              <Text style={s.emptyTitle}>Sin sesiones guardadas</Text>
+              <Text style={s.emptySubtitle}>Las sesiones que visites aparecerán aquí</Text>
             </View>
-            <View style={s.votesRow}>
-              <Ionicons name="heart" size={14} color={colors.error} />
-              <Text style={s.votesText}>{song.votes}</Text>
-            </View>
-          </View>
-        )) : SAVED_SESSIONS.map((session, i) => (
-          <TouchableOpacity key={i} style={s.sessionCard}>
-            <View style={s.sessionIcon}>
-              <Ionicons name="radio" size={22} color={colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.sessionName}>{session.name}</Text>
-              <Text style={s.sessionDJ}>{session.dj}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.sessionListeners}>👥 {session.listeners}</Text>
-              <View style={s.liveBadge}><Text style={s.liveText}>LIVE</Text></View>
-            </View>
-          </TouchableOpacity>
-        ))}
+          )
+        )}
       </ScrollView>
     </View>
   );
@@ -91,24 +199,19 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.base, paddingVertical: spacing.md },
   headerTitle: { ...typography.h3, color: colors.textPrimary, fontSize: 18 },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border },
-  tab: { flex: 1, alignItems: 'center', paddingVertical: spacing.md },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: colors.primary },
-  tabText: { ...typography.bodyBold, color: colors.textMuted, fontSize: 14 },
-  tabTextActive: { color: colors.primary },
-  list: { padding: spacing.base, paddingBottom: 40 },
-  songRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border + '40' },
-  albumArt: { width: 44, height: 44, borderRadius: borderRadius.md, alignItems: 'center', justifyContent: 'center' },
-  songTitle: { ...typography.bodyBold, color: colors.textPrimary, fontSize: 15 },
-  songArtist: { ...typography.caption, color: colors.textSecondary, fontSize: 12 },
-  songSession: { ...typography.caption, color: colors.textMuted, fontSize: 11 },
-  votesRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  votesText: { ...typography.captionBold, color: colors.textMuted, fontSize: 12 },
-  sessionCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.base, marginBottom: spacing.sm },
-  sessionIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary + '15', alignItems: 'center', justifyContent: 'center' },
-  sessionName: { ...typography.bodyBold, color: colors.textPrimary, fontSize: 15 },
-  sessionDJ: { ...typography.caption, color: colors.textSecondary, fontSize: 12 },
-  sessionListeners: { ...typography.caption, color: colors.textMuted, fontSize: 12 },
-  liveBadge: { backgroundColor: colors.primary, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginTop: 4 },
-  liveText: { ...typography.captionBold, color: '#fff', fontSize: 10 },
+  tabs: { flexDirection: 'row', paddingHorizontal: spacing.base, gap: spacing.sm, marginBottom: spacing.md },
+  tab: { flex: 1, paddingVertical: spacing.sm, alignItems: 'center', borderRadius: borderRadius.lg, backgroundColor: colors.surface },
+  tabActive: { backgroundColor: colors.primary + '20' },
+  tabText: { ...typography.bodySmall, color: colors.textSecondary },
+  tabTextActive: { color: colors.primary, fontWeight: '600' },
+  content: { padding: spacing.base, paddingBottom: 40 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.surface, padding: spacing.md, borderRadius: borderRadius.lg, marginBottom: spacing.sm },
+  cardIcon: { width: 48, height: 48, borderRadius: borderRadius.md, alignItems: 'center', justifyContent: 'center' },
+  cardInfo: { flex: 1 },
+  cardTitle: { ...typography.bodyBold, color: colors.textPrimary, fontSize: 15 },
+  cardSubtitle: { ...typography.bodySmall, color: colors.textSecondary, fontSize: 13 },
+  cardMeta: { ...typography.caption, color: colors.textMuted, fontSize: 11, marginTop: 2 },
+  empty: { alignItems: 'center', paddingVertical: spacing['4xl'], gap: spacing.sm },
+  emptyTitle: { ...typography.h3, color: colors.textSecondary },
+  emptySubtitle: { ...typography.bodySmall, color: colors.textMuted, textAlign: 'center' },
 });
