@@ -16,7 +16,7 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
-import AudioPreview from '../../src/components/AudioPreview';
+// Audio playback handled inline with HTML5 Audio
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -136,6 +136,51 @@ export default function SessionScreen() {
   const [dbChat, setDbChat] = useState<ChatMsg[]>([]);
   const [dbPeople, setDbPeople] = useState<any[]>([]);
   const [deezerCache, setDeezerCache] = useState<Record<string, {preview:string, art:string}>>({});
+  const audioRef = useRef<any>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+
+  // Play/pause Deezer preview via main button
+  const toggleAudio = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    
+    // If already playing, pause
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+      setPlaying(false);
+      return;
+    }
+
+    // If paused with existing audio, resume
+    if (audioRef.current && audioRef.current.src) {
+      audioRef.current.play().catch(() => {});
+      setAudioPlaying(true);
+      setPlaying(true);
+      return;
+    }
+
+    // Fetch fresh preview URL from Deezer
+    const q = encodeURIComponent(`${nowPlaying.artist} ${nowPlaying.title}`);
+    try {
+      const res = await fetch(`/api/deezer?q=${q}&type=track`);
+      const data = await res.json();
+      const previewUrl = data?.data?.[0]?.preview;
+      if (!previewUrl) return;
+
+      const AudioCtor = (globalThis as any).Audio || (window as any).Audio;
+      if (!AudioCtor) return;
+      const audio = new AudioCtor(previewUrl);
+      audio.volume = 0.8;
+      audio.addEventListener('ended', () => { setAudioPlaying(false); setPlaying(false); });
+      audioRef.current = audio;
+      await audio.play();
+      setAudioPlaying(true);
+      setPlaying(true);
+    } catch (e) { console.error('Audio error:', e); }
+  }, [nowPlaying]);
+
+  // Cleanup audio on unmount
+  useEffect(() => () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; } }, []);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -308,18 +353,10 @@ export default function SessionScreen() {
       <Text style={s.pArtist}>{nowPlaying.artist}</Text>
       <Text style={s.pAlbum}>{nowPlaying.album}</Text>
       
-      {/* Audio Preview */}
-      {nowPlaying.preview && (
-        <View style={{marginTop: spacing.lg, alignItems: 'center'}}>
-          <AudioPreview 
-            previewUrl={nowPlaying.preview}
-            trackTitle={nowPlaying.title}
-            artistName={nowPlaying.artist}
-            size="large"
-            showTitle={false}
-          />
-        </View>
-      )}
+      {/* Preview indicator */}
+      {nowPlaying.preview ? (
+        <Text style={{color: colors.primary, fontSize: 12, marginTop: spacing.sm}}>♫ Preview 30s disponible</Text>
+      ) : null}
       {/* Progress */}
       <View style={s.progWrap}>
         <View style={s.progTrack}>
@@ -335,7 +372,7 @@ export default function SessionScreen() {
       <View style={s.ctrlRow}>
         <TouchableOpacity><Ionicons name="shuffle" size={24} color={colors.textMuted}/></TouchableOpacity>
         <TouchableOpacity><Ionicons name="play-skip-back" size={28} color={colors.textPrimary}/></TouchableOpacity>
-        <TouchableOpacity style={s.playBtn} onPress={()=>setPlaying(!playing)}>
+        <TouchableOpacity style={s.playBtn} onPress={toggleAudio}>
           <Ionicons name={playing?'pause':'play'} size={32} color={colors.background}/>
         </TouchableOpacity>
         <TouchableOpacity><Ionicons name="play-skip-forward" size={28} color={colors.textPrimary}/></TouchableOpacity>
@@ -446,9 +483,7 @@ export default function SessionScreen() {
                 <Text style={s.qMeta}>Pedida por {item.by} · {item.dur}</Text>
               </View>
               
-              {item.preview ? (
-                <AudioPreview previewUrl={item.preview} size="small" showTitle={false} />
-              ) : null}
+              {/* Preview playable via main player */}
               
               <TouchableOpacity style={s.qVote} onPress={()=>vote(item.id)}>
                 <Ionicons name={v?'arrow-up-circle':'arrow-up-circle-outline'} size={26} color={v?colors.primary:colors.textMuted}/>
