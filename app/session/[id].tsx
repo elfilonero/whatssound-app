@@ -16,8 +16,7 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
-// AudioPreview temporarily disabled — will re-enable after fixing
-// import AudioPreview from '../../src/components/AudioPreview';
+import AudioPreview from '../../src/components/AudioPreview';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -33,13 +32,14 @@ const SESSION = {
 const NOW = {
   title: 'Pepas', artist: 'Farruko', album: 'La 167',
   art: 'https://e-cdns-images.dzcdn.net/images/cover/6ebe38518b35b9fab21e9a1e21b0d400/500x500-000000-80-0-0.jpg',
+  preview: 'https://cdns-preview-d.dzcdn.net/stream/c-deda7fa9316d9e9e880d2c6207e92260-8.mp3',
   duration: 204, currentTime: 107,
 };
 
 const QUEUE = [
-  { id: 'q1', title: 'Gasolina', artist: 'Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/ed4fed49e1447e63e4e8d0e0e3a20ca3/500x500-000000-80-0-0.jpg', by: 'María G.', votes: 8, dur: '3:12' },
-  { id: 'q2', title: 'Despacito', artist: 'Luis Fonsi ft. Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/11be4e951f2e7467b255f4e2a4c37ae8/500x500-000000-80-0-0.jpg', by: 'Pablo R.', votes: 6, dur: '3:47' },
-  { id: 'q3', title: 'Dákiti', artist: 'Bad Bunny & Jhay Cortez', art: 'https://e-cdns-images.dzcdn.net/images/cover/59e41ee07b3a9af3e1a8a6ce79b5a7bb/500x500-000000-80-0-0.jpg', by: 'Ana L.', votes: 5, dur: '3:25' },
+  { id: 'q1', title: 'Gasolina', artist: 'Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/ed4fed49e1447e63e4e8d0e0e3a20ca3/500x500-000000-80-0-0.jpg', preview: '', by: 'María G.', votes: 8, dur: '3:12' },
+  { id: 'q2', title: 'Despacito', artist: 'Luis Fonsi ft. Daddy Yankee', art: 'https://e-cdns-images.dzcdn.net/images/cover/11be4e951f2e7467b255f4e2a4c37ae8/500x500-000000-80-0-0.jpg', preview: '', by: 'Pablo R.', votes: 6, dur: '3:47' },
+  { id: 'q3', title: 'Dákiti', artist: 'Bad Bunny & Jhay Cortez', art: 'https://e-cdns-images.dzcdn.net/images/cover/59e41ee07b3a9af3e1a8a6ce79b5a7bb/500x500-000000-80-0-0.jpg', preview: '', by: 'Ana L.', votes: 5, dur: '3:25' },
   { id: 'q4', title: 'La Bicicleta', artist: 'Shakira & Carlos Vives', art: 'https://e-cdns-images.dzcdn.net/images/cover/a61aec4942e11c528e0dda3a39978af3/500x500-000000-80-0-0.jpg', by: 'Carlos M.', votes: 4, dur: '3:40' },
   { id: 'q5', title: 'Vivir Mi Vida', artist: 'Marc Anthony', art: 'https://e-cdns-images.dzcdn.net/images/cover/cf1ef4ff2daa7e6fde7a171f8e934b33/500x500-000000-80-0-0.jpg', by: 'Sofía T.', votes: 3, dur: '4:11' },
   { id: 'q6', title: 'Baila Conmigo', artist: 'Selena Gomez & Rauw Alejandro', art: 'https://e-cdns-images.dzcdn.net/images/cover/13e56cd62c1804214ef3e8b1c01c6f67/500x500-000000-80-0-0.jpg', by: 'Diego F.', votes: 2, dur: '3:08' },
@@ -135,8 +135,34 @@ export default function SessionScreen() {
   const [dbQueue, setDbQueue] = useState<any[]>([]);
   const [dbChat, setDbChat] = useState<ChatMsg[]>([]);
   const [dbPeople, setDbPeople] = useState<any[]>([]);
+  const [deezerCache, setDeezerCache] = useState<Record<string, {preview:string, art:string}>>({});
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
+
+  // Enrich songs with Deezer preview URLs
+  const enrichWithDeezer = useCallback(async (title: string, artist: string) => {
+    const key = `${title}-${artist}`;
+    if (deezerCache[key]) return deezerCache[key];
+    try {
+      const q = encodeURIComponent(`${artist} ${title}`);
+      const res = await fetch(`/api/deezer?q=${q}&type=track`);
+      const data = await res.json();
+      if (data?.data?.[0]) {
+        const t = data.data[0];
+        const result = { preview: t.preview || '', art: t.album?.cover_big || t.album?.cover_medium || '' };
+        setDeezerCache(prev => ({...prev, [key]: result}));
+        return result;
+      }
+    } catch {}
+    return { preview: '', art: '' };
+  }, [deezerCache]);
+
+  // Auto-enrich NOW playing mock with Deezer
+  const [enrichedNow, setEnrichedNow] = useState<{preview:string, art:string}|null>(null);
+  useEffect(() => {
+    if (dbQueue.length > 0) return; // Use Supabase data
+    enrichWithDeezer(NOW.title, NOW.artist).then(setEnrichedNow);
+  }, []);
 
   // Load from Supabase if real UUID
   useEffect(() => {
@@ -207,7 +233,11 @@ export default function SessionScreen() {
     preview: activeNow.preview_url || '',
     duration: Math.round(activeNow.duration_ms / 1000), 
     currentTime: 0,
-  } : NOW;
+  } : {
+    ...NOW,
+    preview: enrichedNow?.preview || NOW.preview || '',
+    art: enrichedNow?.art || NOW.art,
+  };
 
   useEffect(() => {
     if (!playing) return;
@@ -281,7 +311,13 @@ export default function SessionScreen() {
       {/* Audio Preview */}
       {nowPlaying.preview && (
         <View style={{marginTop: spacing.lg, alignItems: 'center'}}>
-          {/* AudioPreview disabled temporarily */}
+          <AudioPreview 
+            previewUrl={nowPlaying.preview}
+            trackTitle={nowPlaying.title}
+            artistName={nowPlaying.artist}
+            size="large"
+            showTitle={false}
+          />
         </View>
       )}
       {/* Progress */}
@@ -410,7 +446,9 @@ export default function SessionScreen() {
                 <Text style={s.qMeta}>Pedida por {item.by} · {item.dur}</Text>
               </View>
               
-              {/* AudioPreview disabled temporarily */}
+              {item.preview ? (
+                <AudioPreview previewUrl={item.preview} size="small" showTitle={false} />
+              ) : null}
               
               <TouchableOpacity style={s.qVote} onPress={()=>vote(item.id)}>
                 <Ionicons name={v?'arrow-up-circle':'arrow-up-circle-outline'} size={26} color={v?colors.primary:colors.textMuted}/>
