@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { isDemoMode } from '../lib/demo';
+import { isDemoMode, isTestMode } from '../lib/demo';
 
 export interface ChatMessage {
   id: string;
@@ -24,7 +24,7 @@ export function useRealtimeChat(sessionId: string, userId?: string) {
 
   // Load initial messages
   useEffect(() => {
-    if (!sessionId || isDemoMode()) {
+    if (!sessionId || (isDemoMode() && !isTestMode())) {
       setLoading(false);
       return;
     }
@@ -55,7 +55,7 @@ export function useRealtimeChat(sessionId: string, userId?: string) {
 
   // Subscribe to realtime inserts
   useEffect(() => {
-    if (!sessionId || isDemoMode()) return;
+    if (!sessionId || (isDemoMode() && !isTestMode())) return;
 
     const channel = supabase
       .channel(`chat:${sessionId}`)
@@ -94,7 +94,7 @@ export function useRealtimeChat(sessionId: string, userId?: string) {
 
   // Send a message
   const sendMessage = useCallback(async (content: string, authorId: string) => {
-    if (isDemoMode()) return;
+    if (isDemoMode() && !isTestMode()) return;
     await supabase.from('ws_messages').insert({
       session_id: sessionId,
       author_id: authorId,

@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { isDemoMode } from '../lib/demo';
+import { isDemoMode, isTestMode } from '../lib/demo';
 
 export interface QueueSong {
   id: string;
@@ -24,7 +24,7 @@ export function useRealtimeVotes(sessionId: string) {
 
   // Load initial queue
   useEffect(() => {
-    if (!sessionId || isDemoMode()) {
+    if (!sessionId || (isDemoMode() && !isTestMode())) {
       setLoading(false);
       return;
     }
@@ -54,7 +54,7 @@ export function useRealtimeVotes(sessionId: string) {
 
   // Subscribe to realtime updates on vote_count
   useEffect(() => {
-    if (!sessionId || isDemoMode()) return;
+    if (!sessionId || (isDemoMode() && !isTestMode())) return;
 
     const channel = supabase
       .channel(`votes:${sessionId}`)

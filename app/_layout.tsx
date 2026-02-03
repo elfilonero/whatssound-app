@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { colors } from '../src/theme/colors';
 import { useAuthStore } from '../src/stores/authStore';
-import { isDemoMode, DEMO_USER as DEMO_PROFILE_DATA, DEMO_DJ } from '../src/lib/demo';
+import { isDemoMode, isTestMode, getOrCreateTestUser, DEMO_USER as DEMO_PROFILE_DATA, DEMO_DJ } from '../src/lib/demo';
 
 // ═══════════════════════════════════════════════════════════
 // 🎯 DEMO MODE — ?demo=true in URL or defaults to true
@@ -58,8 +58,30 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    if (isTestMode()) {
+      // TEST MODE: create/find real user in Supabase, inject into store
+      (async () => {
+        const testProfile = await getOrCreateTestUser();
+        if (testProfile) {
+          useAuthStore.setState({
+            user: { ...DEMO_USER, id: testProfile.id, user_metadata: { display_name: testProfile.display_name } } as any,
+            session: { ...DEMO_SESSION, user: { ...DEMO_USER, id: testProfile.id } } as any,
+            profile: {
+              ...DEMO_PROFILE,
+              id: testProfile.id,
+              display_name: testProfile.display_name,
+              username: testProfile.username,
+              is_dj: testProfile.is_dj,
+            },
+            initialized: true,
+            loading: false,
+          });
+        }
+      })();
+      return;
+    }
     if (isDemoMode()) {
-      // Bypass auth — inject demo user directly into store
+      // INVESTOR DEMO: bypass auth, read-only mock user
       useAuthStore.setState({
         user: DEMO_USER,
         session: DEMO_SESSION,
@@ -69,6 +91,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       });
       return;
     }
+    // PRODUCTION: real auth
     initialize();
   }, []);
 
