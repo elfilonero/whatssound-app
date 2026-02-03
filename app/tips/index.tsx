@@ -12,6 +12,7 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../../src/lib/supabase';
 
 const RECEIVED = [
   { name: 'Laura García', song: 'Pepas — Farruko', amount: 5, time: 'Hace 10 min' },
@@ -28,12 +29,50 @@ const SENT = [
   { name: 'Sarah B', song: 'Deep House Sunset', amount: 3, time: 'Hace 3 días' },
 ];
 
+function timeAgo(date: string) {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `Hace ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `Hace ${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Ayer';
+  return `Hace ${days} días`;
+}
+
 export default function TipsHistoryScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<'received' | 'sent'>('received');
-  const tips = tab === 'received' ? RECEIVED : SENT;
-  const balance = 47.50;
-  const thisMonth = 32.00;
+  const [dbTips, setDbTips] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Load tips received by DJ Carlos Madrid (demo)
+        const djId = 'd0000001-0000-0000-0000-000000000001';
+        const { data } = await supabase
+          .from('ws_tips')
+          .select('*, sender:ws_profiles!sender_id(display_name), song:ws_songs!song_id(title, artist)')
+          .eq('receiver_id', djId)
+          .order('created_at', { ascending: false });
+        if (data && data.length > 0) {
+          setDbTips(data.map((t: any) => ({
+            name: t.sender?.display_name || 'Anónimo',
+            song: t.song ? `${t.song.title} — ${t.song.artist}` : t.message || 'Propina general',
+            amount: t.amount,
+            time: timeAgo(t.created_at),
+          })));
+        }
+      } catch (e) { /* fallback */ }
+      setLoaded(true);
+    })();
+  }, []);
+
+  const receivedTips = dbTips.length > 0 ? dbTips : RECEIVED;
+  const tips = tab === 'received' ? receivedTips : SENT;
+  const balance = dbTips.length > 0 ? dbTips.reduce((s, t) => s + t.amount, 0) * 0.9 : 47.50;
+  const thisMonth = dbTips.length > 0 ? dbTips.reduce((s, t) => s + t.amount, 0) : 32.00;
 
   return (
     <View style={s.container}>

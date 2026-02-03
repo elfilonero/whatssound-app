@@ -4,15 +4,16 @@
  * Filtros: Todas, Como DJ, Como Oyente + cards sesión
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
+import { supabase } from '../../src/lib/supabase';
 
-const SESSIONS = [
+const MOCK_SESSIONS = [
   { name: 'Viernes Latino 🔥', genre: 'Reggaeton · Latin', role: 'DJ', date: 'Hoy, 02:30', duration: '2h 15m', peak: 47, songs: 34 },
   { name: 'Techno Nights 🌙', genre: 'Techno · Electronic', role: 'Oyente', date: 'Ayer, 23:00', duration: '1h 45m', peak: 82, songs: 28 },
   { name: 'Chill Sunday 🌤️', genre: 'Lo-fi · Chill', role: 'DJ', date: 'Dom, 11:00', duration: '3h 20m', peak: 23, songs: 45 },
@@ -22,9 +23,42 @@ const SESSIONS = [
 
 const FILTERS = ['Todas', 'Como DJ', 'Como Oyente'] as const;
 
+function fmtDuration(start: string, end: string | null) {
+  if (!end) return 'En curso';
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
+
 export default function HistoryScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState<string>('Todas');
+  const [dbSessions, setDbSessions] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('ws_sessions')
+          .select('id, name, genres, started_at, ended_at, is_active, dj_id, members:ws_session_members(id), songs:ws_songs(id)')
+          .order('started_at', { ascending: false });
+        if (data && data.length > 0) {
+          setDbSessions(data.map((s: any) => ({
+            name: s.name,
+            genre: s.genres?.join(' · ') || 'Mix',
+            role: 'DJ', // demo: all shown as DJ
+            date: new Date(s.started_at).toLocaleString('es-ES', { weekday: 'short', hour: '2-digit', minute: '2-digit' }),
+            duration: s.is_active ? 'En curso' : fmtDuration(s.started_at, s.ended_at),
+            peak: s.members?.length || 0,
+            songs: s.songs?.length || 0,
+          })));
+        }
+      } catch (e) { /* fallback */ }
+    })();
+  }, []);
+
+  const SESSIONS = dbSessions.length > 0 ? dbSessions : MOCK_SESSIONS;
 
   const filtered = filter === 'Todas' ? SESSIONS :
     filter === 'Como DJ' ? SESSIONS.filter(s => s.role === 'DJ') :

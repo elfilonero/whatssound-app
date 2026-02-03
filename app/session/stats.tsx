@@ -4,13 +4,14 @@
  * Sesión actual, oyentes/hora (barras), top canciones, propinas, exportar
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
+import { supabase } from '../../src/lib/supabase';
 
 const HOURLY = [
   { hour: '22:00', count: 34 },
@@ -19,7 +20,7 @@ const HOURLY = [
   { hour: '01:00', count: 89 },
 ];
 
-const TOP_SONGS = [
+const MOCK_TOP_SONGS = [
   { pos: 1, title: 'Dakiti', votes: 24 },
   { pos: 2, title: 'Titi Me Preguntó', votes: 19 },
   { pos: 3, title: 'Yonaguni', votes: 15 },
@@ -27,7 +28,7 @@ const TOP_SONGS = [
   { pos: 5, title: 'La Noche de Anoche', votes: 9 },
 ];
 
-const TIPPERS = [
+const MOCK_TIPPERS = [
   { name: 'Laura G.', amount: '€10.00' },
   { name: 'Carlos M.', amount: '€5.00' },
   { name: 'Ana R.', amount: '€15.00' },
@@ -38,6 +39,33 @@ const maxCount = Math.max(...HOURLY.map(h => h.count));
 
 export default function StatsScreen() {
   const router = useRouter();
+  const [topSongs, setTopSongs] = useState(MOCK_TOP_SONGS);
+  const [tippers, setTippers] = useState(MOCK_TIPPERS);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const sessionId = 'b0000001-0000-0000-0000-000000000001';
+        // Top songs
+        const { data: songs } = await supabase
+          .from('ws_songs').select('title, vote_count')
+          .eq('session_id', sessionId).order('vote_count', { ascending: false }).limit(5);
+        if (songs && songs.length > 0) {
+          setTopSongs(songs.map((s: any, i: number) => ({ pos: i + 1, title: s.title, votes: s.vote_count })));
+        }
+        // Top tippers
+        const { data: tips } = await supabase
+          .from('ws_tips').select('amount, sender:ws_profiles!sender_id(display_name)')
+          .eq('session_id', sessionId).order('amount', { ascending: false });
+        if (tips && tips.length > 0) {
+          setTippers(tips.map((t: any) => ({
+            name: (t.sender?.display_name || 'Anónimo').split(' ').map((w: string) => w[0] + w.slice(1, 2)).join(' ') + '.',
+            amount: `€${t.amount.toFixed(2)}`,
+          })));
+        }
+      } catch (e) { /* fallback */ }
+    })();
+  }, []);
 
   return (
     <View style={s.container}>
@@ -88,7 +116,7 @@ export default function StatsScreen() {
         {/* Top songs */}
         <View style={s.card}>
           <Text style={s.cardLabel}>TOP CANCIONES</Text>
-          {TOP_SONGS.map(song => (
+          {topSongs.map(song => (
             <View key={song.pos} style={s.songRow}>
               <Text style={s.songPos}>{song.pos}</Text>
               <Text style={s.songTitle}>{song.title}</Text>
@@ -107,7 +135,7 @@ export default function StatsScreen() {
             <Text style={s.tipsTotal}>€47.50</Text>
             <Text style={s.tipsLabel}>total recibido</Text>
           </View>
-          {TIPPERS.map((t, i) => (
+          {tippers.map((t, i) => (
             <View key={i} style={s.tipperRow}>
               <Text style={s.tipperName}>{t.name}</Text>
               <Text style={s.tipperAmount}>{t.amount}</Text>
