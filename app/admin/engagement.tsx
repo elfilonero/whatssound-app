@@ -54,6 +54,8 @@ export default function EngagementPage() {
         <StatCard icon="repeat" iconColor={colors.primary} value="3.2" label="Sesiones/usuario/semana" trend="+12%" />
         <StatCard icon="chatbubble" iconColor="#22D3EE" value="6.7" label="Msgs/usuario/sesión" trend="+5%" />
         <StatCard icon="heart" iconColor="#F472B6" value="9.4" label="Reacciones/usuario" trend="+34%" />
+        <StatCard icon="trophy" iconColor="#FFD700" value="0.8" label="Golden Boosts/usuario/sem" trend="Nuevo" />
+        <StatCard icon="star" iconColor="#FFD700" value="32%" label="Usuarios que dan GB" trend="Nuevo" />
       </View>
 
       <View style={isWide ? s.twoCol : undefined}>
@@ -72,6 +74,7 @@ export default function EngagementPage() {
             { name: 'Chatear', value: 65, color: '#22D3EE' },
             { name: 'Votar canción', value: 54, color: '#A78BFA' },
             { name: 'Pedir canción', value: 38, color: '#F472B6' },
+            { name: 'Golden Boost', value: 32, color: '#FFD700' },
             { name: 'Enviar propina', value: 12, color: colors.warning },
           ]} />
         </View>

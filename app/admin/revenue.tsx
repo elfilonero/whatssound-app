@@ -223,6 +223,42 @@ export default function RevenuePage() {
         </View>
       </View>
 
+      {/* Golden Boost Revenue */}
+      <Text style={[s.title, {fontSize: 18, marginTop: spacing.lg}]}>🏆 Golden Boosts</Text>
+      <View style={s.statsGrid}>
+        <View style={s.stat}>
+          <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
+            <Ionicons name="trophy" size={20} color="#FFD700"/>
+          </View>
+          <Text style={s.statVal}>€0.00</Text>
+          <Text style={s.statLabel}>Revenue GB extras</Text>
+          <Text style={[s.statTrend, {color: colors.textMuted}]}>Compras €4.99/€9.99</Text>
+        </View>
+        <View style={s.stat}>
+          <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
+            <Ionicons name="infinite" size={20} color="#FFD700"/>
+          </View>
+          <Text style={s.statVal}>€0.00</Text>
+          <Text style={s.statLabel}>Revenue GB permanentes</Text>
+          <Text style={[s.statTrend, {color: colors.textMuted}]}>Compras €19.99</Text>
+        </View>
+        <View style={s.stat}>
+          <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
+            <Ionicons name="analytics" size={20} color="#FFD700"/>
+          </View>
+          <Text style={s.statVal}>0</Text>
+          <Text style={s.statLabel}>Total compras GB</Text>
+        </View>
+        <View style={s.stat}>
+          <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
+            <Ionicons name="pie-chart" size={20} color="#FFD700"/>
+          </View>
+          <Text style={s.statVal}>0%</Text>
+          <Text style={s.statLabel}>Conversión compra GB</Text>
+          <Text style={s.statLabel}>(de gratis a pago)</Text>
+        </View>
+      </View>
+
       <View style={isWide ? s.twoCol : undefined}>
         {/* Tips by DJ */}
         <View style={[s.tableCard, isWide ? {flex:1, marginRight: spacing.md} : {marginBottom: spacing.md}]}>

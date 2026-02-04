@@ -41,6 +41,11 @@ const DEFAULT_METRICS = {
   privateMessages: 0,
   conversations: 0,
   contacts: 0,
+  // Golden Boost metrics
+  goldenBoostsTotal: 0,
+  goldenBoostsThisWeek: 0,
+  goldenBoostsAvailable: 0,
+  topDJByBoosts: '-',
 };
 
 const RECENT_SESSIONS = [
@@ -123,6 +128,11 @@ export default function AdminDashboard() {
           { count: privateMessagesCount },
           { count: conversationsCount },
           { count: contactsCount },
+          // Golden Boost metrics
+          { count: goldenBoostsTotal },
+          { count: goldenBoostsWeek },
+          { data: usersWithBoosts },
+          { data: topDJData },
         ] = await Promise.all([
           supabase.from('ws_profiles').select('*', { count: 'exact', head: true }),
           supabase.from('ws_sessions').select('*', { count: 'exact', head: true }),
@@ -135,6 +145,11 @@ export default function AdminDashboard() {
           supabase.from('ws_private_messages').select('*', { count: 'exact', head: true }),
           supabase.from('ws_conversations').select('*', { count: 'exact', head: true }),
           supabase.from('ws_contacts').select('*', { count: 'exact', head: true }),
+          // Golden Boost metrics
+          supabase.from('ws_golden_boosts').select('*', { count: 'exact', head: true }),
+          supabase.from('ws_golden_boosts').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+          supabase.from('ws_profiles').select('golden_boost_available').gt('golden_boost_available', 0),
+          supabase.from('ws_profiles').select('display_name, golden_boosts_received').order('golden_boosts_received', { ascending: false }).limit(1),
         ]);
 
         const totalTips = tipsData?.reduce((s: number, t: any) => s + Number(t.amount), 0) || 0;
@@ -161,6 +176,11 @@ export default function AdminDashboard() {
           privateMessages: privateMessagesCount || 0,
           conversations: conversationsCount || 0,
           contacts: contactsCount || 0,
+          // Golden Boost metrics
+          goldenBoostsTotal: goldenBoostsTotal || 0,
+          goldenBoostsThisWeek: goldenBoostsWeek || 0,
+          goldenBoostsAvailable: usersWithBoosts?.length || 0,
+          topDJByBoosts: topDJData?.[0]?.display_name || '-',
         });
 
         if (activeSessions && activeSessions.length > 0) {
@@ -222,6 +242,15 @@ export default function AdminDashboard() {
           <StatCard icon="chatbubble-ellipses" iconColor="#8B5CF6" value={METRICS.privateMessages} label="Mensajes privados" />
           <StatCard icon="people-circle" iconColor="#06B6D4" value={METRICS.conversations} label="Conversaciones" />
           <StatCard icon="person-circle" iconColor="#10B981" value={METRICS.contacts} label="Contactos" />
+        </View>
+
+        {/* Golden Boost KPIs */}
+        <SectionHeader icon="🏆" title="Golden Boosts" />
+        <View style={s.statsGrid}>
+          <StatCard icon="trophy" iconColor="#FFD700" value={METRICS.goldenBoostsTotal} label="Total Golden Boosts" />
+          <StatCard icon="calendar" iconColor="#FFD700" value={METRICS.goldenBoostsThisWeek} label="Esta semana" trend={METRICS.goldenBoostsThisWeek > 0 ? `+${METRICS.goldenBoostsThisWeek}` : undefined} />
+          <StatCard icon="gift" iconColor="#FFD700" value={METRICS.goldenBoostsAvailable} label="Usuarios con GB disponible" />
+          <StatCard icon="star" iconColor="#FFD700" value={METRICS.topDJByBoosts} label="Top DJ por Boosts" />
         </View>
 
         {/* Live Sessions */}
