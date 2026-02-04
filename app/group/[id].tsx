@@ -38,6 +38,14 @@ const SB = 'https://xyehncvvvprrqwnsefcr.supabase.co/rest/v1';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
 
 // El modo demo se controla por URL: ?demo=true (mock) o ?demo=false (real)
+// IDs especiales siempre usan mock: g1, demo*, test*
+function isGroupDemo(groupId: string | undefined): boolean {
+  if (!groupId) return true;
+  if (isDemoMode()) return true;
+  // IDs especiales siempre en modo demo
+  const id = groupId.toLowerCase();
+  return id === 'g1' || id.startsWith('demo') || id.startsWith('test');
+}
 
 function getHeaders() {
   let token = '';
@@ -215,8 +223,8 @@ export default function GroupChatScreen() {
   const fetchMessages = useCallback(async () => {
     if (!id) return;
     
-    // Modo demo: usar mensajes mock
-    if (isDemoMode()) {
+    // Modo demo o ID especial: usar mensajes mock (bypass total a Supabase)
+    if (isGroupDemo(id)) {
       setMessages(MOCK_GROUP_MESSAGES);
       return;
     }
@@ -244,8 +252,8 @@ export default function GroupChatScreen() {
   const fetchGroupInfo = useCallback(async () => {
     if (!id) return;
     
-    // Modo demo: usar info mock
-    if (isDemoMode()) {
+    // Modo demo o ID especial: usar info mock (bypass total a Supabase)
+    if (isGroupDemo(id)) {
       setGroupName(MOCK_GROUP_INFO.name);
       setMemberCount(MOCK_GROUP_INFO.memberCount);
       return;
@@ -275,12 +283,14 @@ export default function GroupChatScreen() {
     setLoading(true);
     Promise.all([fetchGroupInfo(), fetchMessages()]).finally(() => setLoading(false));
 
-    // Poll for new messages every 3s
-    pollRef.current = setInterval(fetchMessages, 3000);
+    // Poll for new messages every 3s (solo si NO es demo)
+    if (!isGroupDemo(id)) {
+      pollRef.current = setInterval(fetchMessages, 3000);
+    }
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchGroupInfo, fetchMessages]));
+  }, [id, fetchGroupInfo, fetchMessages]));
 
   // Scroll to bottom when messages change
   useEffect(() => {
