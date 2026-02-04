@@ -14,3 +14,4 @@ export { usePayments } from './usePayments';
 export { usePushNotifications, useNotificationBadge } from './usePushNotifications';
 export { useListeningStreak, getStreakEmoji, getStreakLabel } from './useListeningStreak';
 export { useBadges, type Badge, type UserBadge } from './useBadges';
+export { useAudioSync, type SyncState } from './useAudioSync';
