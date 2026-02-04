@@ -15,8 +15,23 @@ import { Ionicons } from '@expo/vector-icons';
 import { searchTracks, DeezerTrack, formatDuration, getAlbumCoverUrl } from '../lib/deezer';
 import { useDebounce } from '../hooks/useDebounce';
 import AudioPreview from './AudioPreview';
-import { colors } from '../theme/colors';
+import { colors as baseColors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+
+// Compatibility layer for nested color access
+const colors = {
+  ...baseColors,
+  text: {
+    primary: baseColors.textPrimary,
+    secondary: baseColors.textSecondary,
+    muted: baseColors.textMuted,
+  },
+  surface: {
+    base: baseColors.surface,
+    elevated: baseColors.surfaceLight,
+    dark: baseColors.surfaceDark,
+  },
+};
 
 interface SongSearchProps {
   onSongSelect: (track: DeezerTrack) => void;
