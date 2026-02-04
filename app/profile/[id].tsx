@@ -11,6 +11,7 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
+import { GoldenBadgeFull } from '../../src/components/profile/GoldenBadge';
 
 interface UserProfile {
   name: string;
@@ -20,6 +21,8 @@ interface UserProfile {
   sessions: number;
   votes: number;
   tips: number;
+  goldenBoostsReceived: number;
+  goldenBadge: 'none' | 'rising_star' | 'fan_favorite' | 'verified' | 'hall_of_fame';
 }
 
 export default function ProfileScreen() {
@@ -73,6 +76,8 @@ export default function ProfileScreen() {
         sessions: sessionCount || 0,
         votes: voteCount || 0,
         tips: tipCount || 0,
+        goldenBoostsReceived: profile.golden_boosts_received || 0,
+        goldenBadge: profile.golden_badge || 'none',
       });
       setLoading(false);
     })();
@@ -141,6 +146,17 @@ export default function ProfileScreen() {
             <Text style={s.statLabel}>Propinas</Text>
           </View>
         </View>
+
+        {/* Golden Boost Badge */}
+        {(user.goldenBoostsReceived > 0 || user.goldenBadge !== 'none') && (
+          <View style={{width: '100%', marginBottom: spacing.md}}>
+            <GoldenBadgeFull
+              count={user.goldenBoostsReceived}
+              badge={user.goldenBadge}
+              showProgress={true}
+            />
+          </View>
+        )}
 
         {/* Actions */}
         <View style={s.actionsRow}>

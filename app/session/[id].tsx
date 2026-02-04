@@ -18,6 +18,9 @@ import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
 import { PresenceBar } from '../../src/components/session/PresenceBar';
 import { FloatingReactionsContainer, sendReaction } from '../../src/components/session/FloatingReactionsContainer';
+import { GoldenBoostButton } from '../../src/components/session/GoldenBoostButton';
+import { GoldenBoostAnimation } from '../../src/components/session/GoldenBoostAnimation';
+import { useGoldenBoostNotifications } from '../../src/hooks/useGoldenBoostRealtime';
 // AudioPreview temporarily disabled — will re-enable after fixing
 // import AudioPreview from '../../src/components/AudioPreview';
 
@@ -142,6 +145,10 @@ export default function SessionScreen() {
   const [dbPeople, setDbPeople] = useState<any[]>([]);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
+  
+  // Golden Boost realtime notifications
+  const { showAnimation: showGoldenBoost, currentBoost, hideAnimation: hideGoldenBoost } = 
+    useGoldenBoostNotifications(id as string || '');
 
   // Load from Supabase if real UUID
   useEffect(() => {
@@ -346,6 +353,15 @@ export default function SessionScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      {/* Golden Boost */}
+      <View style={{marginTop: spacing.xl, alignItems: 'center'}}>
+        <GoldenBoostButton
+          djId={activeSession.dj_id || 'mock-dj'}
+          djName={activeSession.djName || activeSession.dj?.dj_name || 'DJ Carlos'}
+          sessionId={id as string}
+          size="large"
+        />
+      </View>
       {/* Up Next */}
       <View style={s.upNext}>
         <Text style={s.upNextLabel}>A continuación</Text>
@@ -497,6 +513,14 @@ export default function SessionScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      {/* Golden Boost Animation - se muestra para toda la sala */}
+      {showGoldenBoost && currentBoost && (
+        <GoldenBoostAnimation
+          djName={currentBoost.toDjName}
+          giverName={currentBoost.fromUserName}
+          onComplete={hideGoldenBoost}
+        />
+      )}
     </SafeAreaView>
   );
 }
