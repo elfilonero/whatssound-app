@@ -9,8 +9,12 @@
  * - UI feedback
  */
 
-import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
+
+// Mock Audio para web (expo-av no disponible en web build)
+const Audio = Platform.OS === 'web' 
+  ? { Sound: class { async loadAsync() {} async playAsync() {} async unloadAsync() {} } }
+  : require('expo-av').Audio;
 
 // Cache de sonidos cargados
 const soundCache: Record<string, Audio.Sound> = {};
