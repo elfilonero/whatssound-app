@@ -57,13 +57,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
-      [
-        "expo-av",
-        {
-          "microphonePermission": "WhatsSound usa el micrófono para mensajes de voz."
-        }
-      ]
+      "expo-font"
     ]
   }
 }
