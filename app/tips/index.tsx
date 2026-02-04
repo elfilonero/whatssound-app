@@ -1,9 +1,9 @@
 /**
- * WhatsSound — Historial de Propinas
- * Referencia: 27-historial-propinas.png
+ * WhatsSound — Historial de Volumen
+ * Referencia: 27-historial-volumen.png
  * Tabs: Recibidas / Enviadas + Balance + Lista + Retirar fondos
  * 
- * CONECTADO A SUPABASE: carga propinas reales de ws_tips
+ * CONECTADO A SUPABASE: carga decibelios reales de ws_tips
  */
 
 import React, { useState, useEffect } from 'react';
@@ -78,7 +78,7 @@ export default function TipsHistoryScreen() {
         setReceivedTips(received.map((t: any) => ({
           id: t.id,
           name: t.is_anonymous ? 'Anónimo' : (t.sender?.display_name || 'Usuario'),
-          song: t.song ? `${t.song.title} — ${t.song.artist}` : t.message || 'Propina general',
+          song: t.song ? `${t.song.title} — ${t.song.artist}` : t.message || 'Volumen general',
           amount: t.amount,
           time: timeAgo(t.created_at),
           status: t.status,
@@ -94,7 +94,7 @@ export default function TipsHistoryScreen() {
       setSentTips(sent.map((t: any) => ({
         id: t.id,
         name: t.receiver?.dj_name || t.receiver?.display_name || 'DJ',
-        song: t.session?.name || t.message || 'Propina general',
+        song: t.session?.name || t.message || 'Volumen general',
         amount: t.amount,
         time: timeAgo(t.created_at),
         status: t.status,
