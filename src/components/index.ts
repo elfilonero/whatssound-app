@@ -26,6 +26,7 @@ export { StreakCard, StreakBadge } from './profile/StreakCard';
 export { BoostCounter, BoostBadge } from './profile/BoostCounter';
 export { BoostHistory } from './profile/BoostHistory';
 export { BuyBoostModal } from './profile/BuyBoostModal';
+export { DJBadges, BadgeCard, BadgeGrid, VerifiedBadge, getEarnedBadges, getHighestBadge } from './profile/DJBadges';
 
 // Discover Components
 export { DJRanking } from './discover/DJRanking';
