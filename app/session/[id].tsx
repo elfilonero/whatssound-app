@@ -21,8 +21,8 @@ import { FloatingReactionsContainer, sendReaction } from '../../src/components/s
 import { GoldenBoostButton } from '../../src/components/session/GoldenBoostButton';
 import { GoldenBoostAnimation } from '../../src/components/session/GoldenBoostAnimation';
 import { useGoldenBoostNotifications } from '../../src/hooks/useGoldenBoostRealtime';
-import { useAudioSync } from '../../src/hooks';
-import { TipModal } from '../../src/components/TipModal';
+import { useAudioSync, useDecibels } from '../../src/hooks';
+import { DecibelModal } from '../../src/components/DecibelModal';
 import { useAuthStore } from '../../src/stores/authStore';
 // AudioPreview temporarily disabled — will re-enable after fixing
 // import AudioPreview from '../../src/components/AudioPreview';
@@ -146,7 +146,7 @@ export default function SessionScreen() {
   const [dbQueue, setDbQueue] = useState<any[]>([]);
   const [dbChat, setDbChat] = useState<ChatMsg[]>([]);
   const [dbPeople, setDbPeople] = useState<any[]>([]);
-  const [showTipModal, setShowTipModal] = useState(false);
+  const [showDecibelModal, setShowDecibelModal] = useState(false);
   const listRef = useRef<FlatList>(null);
   const pulse = useRef(new Animated.Value(1)).current;
   
@@ -174,6 +174,24 @@ export default function SessionScreen() {
     },
     enabled: !!(id && !id.startsWith('mock-')),
   });
+
+  // Decibels system
+  const { state: decibelState, earnDecibels } = useDecibels();
+  const [earnedThisSession, setEarnedThisSession] = useState(0);
+
+  // Track listening time - earn 1 dB per minute
+  useEffect(() => {
+    if (!playing || !id) return;
+    
+    const interval = setInterval(() => {
+      if (playing && id && !id.startsWith('mock-')) {
+        earnDecibels(id, 1);
+        setEarnedThisSession(prev => prev + 1);
+      }
+    }, 60000); // Every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [playing, id, earnDecibels]);
 
   // Load from Supabase if real UUID
   useEffect(() => {
@@ -322,6 +340,11 @@ export default function SessionScreen() {
       <View style={s.liveBadge}><View style={s.liveRedDot}/><Text style={s.liveText}>EN VIVO</Text></View>
       {!isDJ && isSynced && <View style={s.syncBadge}><Text style={s.syncText}>✓ Sync</Text></View>}
       {!isDJ && isSyncing && <View style={s.syncingBadge}><Text style={s.syncingText}>⟳</Text></View>}
+      {earnedThisSession > 0 && (
+        <View style={s.dbEarnedBadge}>
+          <Text style={s.dbEarnedText}>+{earnedThisSession} dB</Text>
+        </View>
+      )}
     </View>
   );
 
@@ -384,11 +407,11 @@ export default function SessionScreen() {
       <View style={{marginTop: spacing.xl, flexDirection: 'row', justifyContent: 'center', gap: spacing.md}}>
         <TouchableOpacity 
           style={s.tipButton}
-          onPress={() => setShowTipModal(true)}
+          onPress={() => setShowDecibelModal(true)}
           activeOpacity={0.7}
         >
-          <Text style={{fontSize: 24}}>💸</Text>
-          <Text style={s.tipButtonText}>Propina</Text>
+          <Text style={{fontSize: 24}}>🔊</Text>
+          <Text style={s.tipButtonText}>Volumen</Text>
         </TouchableOpacity>
         <GoldenBoostButton
           djId={activeSession.dj_id || 'mock-dj'}
@@ -398,13 +421,12 @@ export default function SessionScreen() {
         />
       </View>
 
-      {/* Tip Modal */}
-      <TipModal
-        visible={showTipModal}
-        onClose={() => setShowTipModal(false)}
+      {/* Decibel Modal */}
+      <DecibelModal
+        visible={showDecibelModal}
+        onClose={() => setShowDecibelModal(false)}
         djId={activeSession.dj_id || 'mock-dj'}
         djName={activeSession.djName || activeSession.dj?.dj_name || 'DJ Carlos'}
-        djAvatar={activeSession.dj?.avatar_url}
         sessionId={id as string}
       />
       {/* Up Next */}
@@ -589,6 +611,8 @@ const s = StyleSheet.create({
   syncText: { ...typography.captionBold, color:'#22c55e', fontSize:10 },
   syncingBadge: { backgroundColor:colors.primary+'20', paddingHorizontal:spacing.sm, paddingVertical:spacing.xs, borderRadius:borderRadius.full, marginLeft:4 },
   syncingText: { ...typography.captionBold, color:colors.primary, fontSize:10 },
+  dbEarnedBadge: { backgroundColor:'#8B5CF620', paddingHorizontal:spacing.sm, paddingVertical:spacing.xs, borderRadius:borderRadius.full, marginLeft:4 },
+  dbEarnedText: { ...typography.captionBold, color:'#8B5CF6', fontSize:10 },
 
   // Tab Bar
   tabBar: { flexDirection:'row', backgroundColor:colors.surface, borderTopWidth:.5, borderTopColor:colors.border, paddingBottom:Platform.OS==='ios'?spacing.lg:spacing.sm, paddingTop:spacing.sm },
