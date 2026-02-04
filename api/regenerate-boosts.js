@@ -6,7 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
  * Ejecutar cada VIERNES a las 11:00 UTC (12:00 CET)
  */
 
-module.exports = async function handler(req, res) {
+module.exports = async (req, res) => {
   // Solo GET
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
