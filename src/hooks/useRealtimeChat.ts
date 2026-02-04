@@ -4,9 +4,12 @@
  * New messages appear instantly without refresh
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { isDemoMode, isTestMode } from '../lib/demo';
+
+// Backoff exponencial: 1s, 2s, 4s, 8s, max 30s
+const getBackoffDelay = (attempt: number) => Math.min(1000 * Math.pow(2, attempt), 30000);
 
 export interface ChatMessage {
   id: string;
@@ -53,41 +56,62 @@ export function useRealtimeChat(sessionId: string, userId?: string) {
     })();
   }, [sessionId, userId]);
 
-  // Subscribe to realtime inserts
+  // Subscribe to realtime inserts with retry
   useEffect(() => {
     if (!sessionId || (isDemoMode() && !isTestMode())) return;
 
-    const channel = supabase
-      .channel(`chat:${sessionId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'ws_messages',
-        filter: `session_id=eq.${sessionId}`,
-      }, async (payload) => {
-        const msg = payload.new as any;
-        // Fetch author name
-        const { data: author } = await supabase
-          .from('ws_profiles')
-          .select('display_name')
-          .eq('id', msg.author_id)
-          .single();
+    const reconnectAttempts = { current: 0 };
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let channel: ReturnType<typeof supabase.channel>;
 
-        const newMsg: ChatMessage = {
-          id: msg.id,
-          user: author?.display_name || 'Anónimo',
-          text: msg.content,
-          time: new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-          isMine: msg.author_id === userId,
-          role: msg.type === 'dj_announce' ? 'dj' : undefined,
-          type: msg.type,
-        };
+    const setupChannel = () => {
+      channel = supabase
+        .channel(`chat:${sessionId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ws_messages',
+          filter: `session_id=eq.${sessionId}`,
+        }, async (payload) => {
+          const msg = payload.new as any;
+          const { data: author } = await supabase
+            .from('ws_profiles')
+            .select('display_name')
+            .eq('id', msg.author_id)
+            .single();
 
-        setMessages(prev => [...prev, newMsg]);
-      })
-      .subscribe();
+          const newMsg: ChatMessage = {
+            id: msg.id,
+            user: author?.display_name || 'Anónimo',
+            text: msg.content,
+            time: new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+            isMine: msg.author_id === userId,
+            role: msg.type === 'dj_announce' ? 'dj' : undefined,
+            type: msg.type,
+          };
+
+          setMessages(prev => [...prev, newMsg]);
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts.current = 0;
+            console.log('[Chat] Conectado a sesión:', sessionId);
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('[Chat] Error en canal, reconectando...');
+            const delay = getBackoffDelay(reconnectAttempts.current);
+            reconnectTimeout = setTimeout(() => {
+              reconnectAttempts.current++;
+              supabase.removeChannel(channel);
+              setupChannel();
+            }, delay);
+          }
+        });
+    };
+
+    setupChannel();
 
     return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
       supabase.removeChannel(channel);
     };
   }, [sessionId, userId]);
