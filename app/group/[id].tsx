@@ -22,6 +22,7 @@ import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { Avatar } from '../../src/components/ui/Avatar';
+import { isDemoMode } from '../../src/lib/demo';
 
 // Ionicons web font fix
 if (Platform.OS === 'web') {
@@ -36,8 +37,7 @@ if (Platform.OS === 'web') {
 const SB = 'https://xyehncvvvprrqwnsefcr.supabase.co/rest/v1';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
 
-// Siempre usar demo en vercel.app para mostrar mockups
-const USE_DEMO_DATA = true; // Cambiar a false cuando conectemos Supabase real
+// El modo demo se controla por URL: ?demo=true (mock) o ?demo=false (real)
 
 function getHeaders() {
   let token = '';
@@ -216,7 +216,7 @@ export default function GroupChatScreen() {
     if (!id) return;
     
     // Modo demo: usar mensajes mock
-    if (USE_DEMO_DATA) {
+    if (isDemoMode()) {
       setMessages(MOCK_GROUP_MESSAGES);
       return;
     }
@@ -245,7 +245,7 @@ export default function GroupChatScreen() {
     if (!id) return;
     
     // Modo demo: usar info mock
-    if (USE_DEMO_DATA) {
+    if (isDemoMode()) {
       setGroupName(MOCK_GROUP_INFO.name);
       setMemberCount(MOCK_GROUP_INFO.memberCount);
       return;
