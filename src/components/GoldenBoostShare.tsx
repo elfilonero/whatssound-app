@@ -15,8 +15,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Sharing from 'expo-sharing';
-import { captureRef } from 'react-native-view-shot';
+// Simplified sharing without extra dependencies
+// TODO: Add expo-sharing and react-native-view-shot for image sharing
 import { GoldenBoostEvent } from '../hooks/useGoldenBoostRealtime';
 
 interface GoldenBoostShareProps {
@@ -56,29 +56,10 @@ export function GoldenBoostShare({
           Alert.alert('Copiado', 'Texto copiado al portapapeles');
         }
       } else {
-        // En nativo, intentar capturar imagen primero
-        if (cardRef.current && await Sharing.isAvailableAsync()) {
-          try {
-            const uri = await captureRef(cardRef, {
-              format: 'png',
-              quality: 1,
-            });
-            
-            await Sharing.shareAsync(uri, {
-              mimeType: 'image/png',
-              dialogTitle: 'Compartir Golden Boost',
-            });
-          } catch (captureError) {
-            // Si falla la captura, compartir solo texto
-            await Share.share({
-              message: `${text}\n\nhttps://whatssound.app`,
-            });
-          }
-        } else {
-          await Share.share({
-            message: `${text}\n\nhttps://whatssound.app`,
-          });
-        }
+        // En nativo, compartir texto
+        await Share.share({
+          message: `${text}\n\nhttps://whatssound.app`,
+        });
       }
 
       onShare?.();
@@ -88,27 +69,17 @@ export function GoldenBoostShare({
   };
 
   const handleShareInstagram = async () => {
-    // Instagram Stories requiere la app de Instagram
-    const instagramUrl = `instagram://story-camera`;
+    // Por ahora, usar share nativo que puede abrir Instagram
+    const text = variant === 'received'
+      ? `🏆 ¡He recibido un Golden Boost de ${boost.fromUserName} en WhatsSound!`
+      : `🏆 ¡Le he dado un Golden Boost a ${boost.toDjName} en WhatsSound!`;
     
     try {
-      // Capturar imagen
-      if (cardRef.current) {
-        const uri = await captureRef(cardRef, {
-          format: 'png',
-          quality: 1,
-        });
-        
-        // En iOS, usar el share sheet con la imagen
-        // Instagram lo detectará automáticamente
-        if (Platform.OS !== 'web') {
-          await Share.share({
-            url: uri,
-          });
-        }
-      }
+      await Share.share({
+        message: `${text}\n\n🎵 https://whatssound.app`,
+      });
     } catch (error) {
-      Alert.alert('Error', 'No se pudo compartir en Instagram');
+      Alert.alert('Error', 'No se pudo compartir');
     }
   };
 

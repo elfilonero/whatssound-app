@@ -17,8 +17,36 @@ import {
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
-import { formatDistanceToNow, startOfWeek, endOfWeek } from 'date-fns';
-import { es } from 'date-fns/locale';
+// Helper functions (no date-fns dependency)
+const formatDistanceToNow = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor(diff / (1000 * 60));
+  
+  if (days > 0) return `hace ${days}d`;
+  if (hours > 0) return `hace ${hours}h`;
+  if (minutes > 0) return `hace ${minutes}m`;
+  return 'ahora';
+};
+
+const startOfWeek = (date: Date): Date => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfWeek = (date: Date): Date => {
+  const start = startOfWeek(date);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+};
 
 interface DJRanking {
   id: string;

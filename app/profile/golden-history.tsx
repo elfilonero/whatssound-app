@@ -16,8 +16,19 @@ import {
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useGoldenBoost, GoldenBoostGiven, GoldenBoostReceived } from '../../src/hooks/useGoldenBoost';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+// Helper function (no date-fns dependency)
+const formatDistanceToNow = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor(diff / (1000 * 60));
+  
+  if (days > 0) return `hace ${days}d`;
+  if (hours > 0) return `hace ${hours}h`;
+  if (minutes > 0) return `hace ${minutes}m`;
+  return 'ahora';
+};
 
 type TabType = 'received' | 'given';
 
