@@ -184,7 +184,7 @@ export default function UsersPage() {
             <Text style={[s.cell, s.cellNum]}>{u.sessions}</Text>
             <Text style={[s.cell, s.cellNum]}>{u.songs}</Text>
             <Text style={[s.cell, s.cellNum, {color: colors.warning}]}>{u.tips}</Text>
-            <View style={s.cell}>{roleBadge(u.role)}</View>
+            <View style={s.cellView}>{roleBadge(u.role)}</View>
           </TouchableOpacity>
         ))}
 
@@ -212,6 +212,7 @@ const s = StyleSheet.create({
   rowHeader: { backgroundColor: colors.surfaceDark },
   rowAlt: { backgroundColor: colors.surfaceLight + '30' },
   cell: { fontSize: 13, color: colors.textSecondary },
+  cellView: { }, // Para usar en View sin text styles
   cellName: { flex: 2, minWidth: 120 },
   cellSmall: { flex: 1, minWidth: 80 },
   cellNum: { width: 50, textAlign: 'center' },

@@ -90,18 +90,22 @@ export default function FavoritesScreen() {
       if (joinedSessions) {
         const uniqueSessions = new Map<string, SavedSession>();
         for (const m of joinedSessions) {
-          if (m.session && !uniqueSessions.has(m.session.id)) {
+          // session puede ser array o objeto dependiendo del join
+          const session = Array.isArray(m.session) ? m.session[0] : m.session;
+          if (session && !uniqueSessions.has(session.id)) {
             // Contar miembros actuales
             const { count } = await supabase
               .from('ws_session_members')
               .select('*', { count: 'exact', head: true })
-              .eq('session_id', m.session.id)
+              .eq('session_id', session.id)
               .is('left_at', null);
 
-            uniqueSessions.set(m.session.id, {
-              id: m.session.id,
-              name: m.session.name,
-              dj: (m.session.dj as any)?.dj_name || (m.session.dj as any)?.display_name || 'DJ',
+            // dj puede ser array o objeto
+            const dj = Array.isArray(session.dj) ? session.dj[0] : session.dj;
+            uniqueSessions.set(session.id, {
+              id: session.id,
+              name: session.name,
+              dj: dj?.dj_name || dj?.display_name || 'DJ',
               listeners: count || 0,
             });
           }

@@ -179,7 +179,7 @@ export default function SessionsPage() {
             <Text style={[s.cell, s.cellNum]}>{se.messages}</Text>
             <Text style={[s.cell, s.cellNum, {color: colors.warning}]}>{se.tips}</Text>
             <Text style={[s.cell, s.cellSmall]}>{se.duration}</Text>
-            <View style={s.cell}>
+            <View style={s.cellView}>
               <View style={[s.statusBadge, se.status === 'live' ? s.statusLive : s.statusEnded]}>
                 <Text style={s.statusText}>{se.status === 'live' ? '🔴 Live' : 'Ended'}</Text>
               </View>
@@ -217,6 +217,7 @@ const s = StyleSheet.create({
   rowHeader: { backgroundColor: colors.surfaceDark },
   rowAlt: { backgroundColor: colors.surfaceLight + '30' },
   cell: { fontSize: 13, color: colors.textSecondary },
+  cellView: { }, // Para usar en View sin text styles
   cellName: { flex: 2, minWidth: 120 },
   cellSmall: { flex: 1, minWidth: 80 },
   cellNum: { width: 50, textAlign: 'center' },

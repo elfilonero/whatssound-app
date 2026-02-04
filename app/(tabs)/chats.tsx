@@ -211,14 +211,17 @@ export default function ChatsScreen() {
           // Para chats privados, encontrar el contacto (no soy yo)
           const contact = conv.members?.find((m: any) => m.user_id !== user.id);
 
+          // profile puede ser array o objeto dependiendo del join
+          const profile = Array.isArray(contact?.profile) ? contact.profile[0] : contact?.profile;
+          
           return {
             id: conv.id,
             type: conv.type,
             contact: contact ? {
               id: contact.user_id,
-              name: contact.profile?.display_name || 'Usuario',
-              avatar: contact.profile?.avatar_url,
-              username: contact.profile?.username,
+              name: profile?.display_name || 'Usuario',
+              avatar: profile?.avatar_url,
+              username: profile?.username,
             } : null,
             lastMessage: lastMessage ? {
               content: lastMessage.content,

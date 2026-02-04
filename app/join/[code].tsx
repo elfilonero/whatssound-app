@@ -83,11 +83,13 @@ export default function DeepLinkScreen() {
         .single();
 
       if (!error && invite) {
+        // creator puede ser array o objeto dependiendo del join
+        const creator = Array.isArray(invite.creator) ? invite.creator[0] : invite.creator;
         setInviteData({
           id: invite.id,
           code: invite.code,
-          creator_name: invite.creator?.display_name || 'Usuario',
-          creator_avatar: invite.creator?.avatar_url || null,
+          creator_name: creator?.display_name || 'Usuario',
+          creator_avatar: creator?.avatar_url ?? null,
           invitee_name: invite.invitee_name,
           invitee_country: invite.invitee_country,
           created_at: invite.created_at,

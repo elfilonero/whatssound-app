@@ -162,11 +162,13 @@ export default function ChatScreen() {
       // Encontrar el contacto (no soy yo)
       const contactMember = conversation.members?.find((m: any) => m.user_id !== user.id);
       if (contactMember) {
+        // profile puede ser array o objeto dependiendo del join
+        const profile = Array.isArray(contactMember?.profile) ? contactMember.profile[0] : contactMember?.profile;
         setContact({
           id: contactMember.user_id,
-          name: contactMember.profile?.display_name || 'Usuario',
-          avatar: contactMember.profile?.avatar_url,
-          username: contactMember.profile?.username,
+          name: profile?.display_name || 'Usuario',
+          avatar: profile?.avatar_url,
+          username: profile?.username,
           isOnline: false, // TODO: implementar estado online
         });
       }

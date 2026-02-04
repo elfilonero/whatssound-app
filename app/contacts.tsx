@@ -233,7 +233,8 @@ export default function ContactsScreen() {
       let conversationId = null;
       if (existingConversation) {
         for (const conv of existingConversation) {
-          const conversation = conv.conversation;
+          // conversation puede ser array o objeto dependiendo del join
+          const conversation = Array.isArray(conv.conversation) ? conv.conversation[0] : conv.conversation;
           if (conversation?.type === 'private' && conversation.members?.length === 2) {
             const otherMember = conversation.members.find((m: any) => m.user_id !== user.id);
             if (otherMember?.user_id === contact.userId) {
