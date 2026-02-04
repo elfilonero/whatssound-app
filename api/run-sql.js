@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     try {
       const { Client } = require('pg');
       const c = new Client({
-        connectionString: 'postgresql://postgres.xyehncvvvprrqwnsefcr:Vertex2026WS!@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres',
+        connectionString: 'postgresql://postgres.xyehncvvvprrqwnsefcr:Vertex2026WS!@aws-0-eu-central-1.pooler.supabase.com:6543/postgres',
         ssl: { rejectUnauthorized: false },
         connectionTimeoutMillis: 10000,
       });
