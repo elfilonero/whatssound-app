@@ -38,6 +38,18 @@ vercel deploy --prod --yes
 
 React Native + Expo 54 · Expo Router · Supabase · Zustand · TanStack Query · Deezer API · Vercel
 
+## 🏆 Golden Boost (V4)
+
+Sistema de reconocimiento entre oyentes y DJs:
+
+- **1 Golden Boost por semana** — Regenera viernes 12:00
+- **Acelerador** — +1 extra al escuchar 5 sesiones diferentes
+- **Compra opcional** — €4.99 por unidad extra
+- **Badges** — Rising Star → Fan Favorite → Verificado → Hall of Fame
+- **Hall of Fame** — Ranking semanal de DJs
+
+Ver: [CHANGELOG-V4-GOLDEN-BOOST.md](./docs/CHANGELOG-V4-GOLDEN-BOOST.md)
+
 ## Documentación
 
 - [STATUS.md](./STATUS.md) — Estado actual del proyecto (v2)
