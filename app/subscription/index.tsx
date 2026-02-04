@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textMuted,
   },
   selectBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   footer: {

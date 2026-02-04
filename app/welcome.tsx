@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   primaryBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
     fontSize: 16,
   },

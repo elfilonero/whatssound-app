@@ -735,7 +735,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   previewBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   apiCard: {
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   unlockBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   backLink: {

@@ -155,21 +155,21 @@ export default function SessionScreen() {
     useGoldenBoostNotifications(id as string || '');
 
   // Audio sync between DJ and listeners
-  const { user } = useAuthStore();
-  const isDJ = sessionData?.dj_id === user?.id;
-  const nowPlaying = sessionData?.songs?.find((s: any) => s.status === 'playing') || NOW;
-  const currentTimeMs = progress * (nowPlaying.duration || NOW.duration) * 1000;
+  const { user: authUser } = useAuthStore();
+  const isDJ = sessionData?.dj_id === authUser?.id;
+  const syncSong = sessionData?.songs?.find((s: any) => s.status === 'playing') || NOW;
+  const currentTimeMs = progress * (syncSong.duration || NOW.duration) * 1000;
   
   const { isSynced, isSyncing } = useAudioSync({
     sessionId: id as string || '',
     isDJ,
-    songId: nowPlaying.id || 'demo',
+    songId: syncSong.id || 'demo',
     currentTimeMs,
     isPlaying: playing,
     onSeekTo: (timeMs) => {
       if (audioRef.current) {
         audioRef.current.currentTime = timeMs / 1000;
-        setProgress(timeMs / 1000 / (nowPlaying.duration || NOW.duration));
+        setProgress(timeMs / 1000 / (syncSong.duration || NOW.duration));
       }
     },
     enabled: !!(id && !id.startsWith('mock-')),

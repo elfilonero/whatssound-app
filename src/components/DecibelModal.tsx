@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.textMuted,
   },
   sendBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   cancelBtn: {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   retryBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
 });

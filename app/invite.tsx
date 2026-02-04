@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.base,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing['2xl'],
   },
   header: {
     flexDirection: 'row',
@@ -250,14 +250,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   btnPrimaryText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   btnSecondary: {
     backgroundColor: colors.primary + '20',
   },
   btnSecondaryText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: colors.primary,
   },
   statsCard: {

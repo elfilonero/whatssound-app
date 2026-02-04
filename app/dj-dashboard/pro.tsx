@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   editProfileText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   contentCard: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   unlockBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   backLink: {

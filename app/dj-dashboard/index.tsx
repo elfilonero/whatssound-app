@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   createBtnText: {
-    ...typography.buttonText,
+    ...typography.button,
     color: '#fff',
   },
   ctaCard: {
