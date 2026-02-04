@@ -16,7 +16,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+// TODO: Instalar @react-native-community/datetimepicker cuando se necesite
+// import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../../src/theme/colors';
 import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
@@ -190,6 +191,7 @@ export default function ScheduleSessionScreen() {
           <Text style={styles.datePreview}>{formatDate(date)}</Text>
         </View>
 
+        {/* TODO: Instalar @react-native-community/datetimepicker
         {showDatePicker && (
           <DateTimePicker
             value={date}
@@ -224,6 +226,7 @@ export default function ScheduleSessionScreen() {
             }}
           />
         )}
+        */}
 
         {/* Duración */}
         <View style={styles.field}>

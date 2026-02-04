@@ -32,7 +32,7 @@ const GENRES = [
 
 export default function CreateProfileScreen() {
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { setProfile, user } = useAuthStore();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -73,12 +73,17 @@ export default function CreateProfileScreen() {
             console.warn('Error updating profile:', updateError);
           }
 
-          setUser({
+          setProfile({
             id: testProfile.id,
-            displayName: name.trim(),
+            display_name: name.trim(),
             username: testProfile.username,
-            avatarUrl: testProfile.avatar_url,
-            isDJ: testProfile.is_dj,
+            avatar_url: testProfile.avatar_url,
+            is_dj: testProfile.is_dj,
+            bio: bio.trim(),
+            is_verified: false,
+            dj_name: null,
+            genres: selectedGenres,
+            role: 'user',
           });
 
           router.replace('/(auth)/permissions');
@@ -122,12 +127,17 @@ export default function CreateProfileScreen() {
         return;
       }
 
-      setUser({
+      setProfile({
         id: profile.id,
-        displayName: profile.display_name,
+        display_name: profile.display_name,
         username: profile.username,
-        avatarUrl: profile.avatar_url,
-        isDJ: profile.is_dj,
+        avatar_url: profile.avatar_url,
+        is_dj: profile.is_dj,
+        bio: profile.bio || '',
+        is_verified: profile.is_verified || false,
+        dj_name: profile.dj_name || null,
+        genres: profile.genres || [],
+        role: profile.role || 'user',
       });
 
       // Ir a permisos

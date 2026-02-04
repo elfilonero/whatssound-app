@@ -27,7 +27,7 @@ const OTP_LENGTH = 6;
 
 export default function OTPScreen() {
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { setProfile } = useAuthStore();
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [countdown, setCountdown] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -88,12 +88,17 @@ export default function OTPScreen() {
       if (isTestMode()) {
         const testProfile = await getOrCreateTestUser();
         if (testProfile) {
-          setUser({
+          setProfile({
             id: testProfile.id,
-            displayName: testProfile.display_name,
+            display_name: testProfile.display_name,
             username: testProfile.username,
-            avatarUrl: testProfile.avatar_url,
-            isDJ: testProfile.is_dj,
+            avatar_url: testProfile.avatar_url,
+            is_dj: testProfile.is_dj,
+            bio: '',
+            is_verified: false,
+            dj_name: null,
+            genres: [],
+            role: 'user',
           });
           
           // Limpiar teléfono pendiente
@@ -132,12 +137,17 @@ export default function OTPScreen() {
           .single();
 
         if (profile) {
-          setUser({
+          setProfile({
             id: profile.id,
-            displayName: profile.display_name,
+            display_name: profile.display_name,
             username: profile.username,
-            avatarUrl: profile.avatar_url,
-            isDJ: profile.is_dj,
+            avatar_url: profile.avatar_url,
+            is_dj: profile.is_dj,
+            bio: profile.bio || '',
+            is_verified: profile.is_verified || false,
+            dj_name: profile.dj_name || null,
+            genres: profile.genres || [],
+            role: profile.role || 'user',
           });
           router.replace('/(tabs)');
         } else {
