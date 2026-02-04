@@ -262,7 +262,7 @@ function BoostItem({
       <View style={styles.boostInfo}>
         <Text style={styles.boostUser}>{userName}</Text>
         <Text style={styles.boostDate}>
-          {formatDistanceToNow(date, { addSuffix: true, locale: es })}
+          {formatDistanceToNow(date)}
         </Text>
       </View>
       <View style={styles.boostIcon}>

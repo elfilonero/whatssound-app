@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../stores/authStore';
 
 export interface GoldenBoostState {
   /** Golden Boosts disponibles para dar */
@@ -47,7 +47,7 @@ export interface GoldenBoostReceived {
 }
 
 export function useGoldenBoost() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [state, setState] = useState<GoldenBoostState>({
     available: 0,
     given: 0,

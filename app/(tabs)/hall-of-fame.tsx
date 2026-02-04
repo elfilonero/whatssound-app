@@ -102,7 +102,7 @@ export default function HallOfFameScreen() {
       setRankings(allTimeRankings);
 
       // Ranking de esta semana
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Lunes
+      const weekStart = startOfWeek(new Date()); // Lunes (ya configurado en helper)
       
       const { data: weeklyData, error: weeklyError } = await supabase
         .from('ws_golden_boosts')
