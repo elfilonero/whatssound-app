@@ -19,7 +19,7 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - run: npm install --legacy-peer-deps
 
       - name: Export web build
         run: npx expo export --platform web
