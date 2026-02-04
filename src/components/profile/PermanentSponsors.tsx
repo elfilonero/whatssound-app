@@ -13,7 +13,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+// LinearGradient reemplazado por View simple
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -74,10 +74,7 @@ export function PermanentSponsors({ djId, onBecomeSponsor }: PermanentSponsorsPr
   const renderSponsor = ({ item }: { item: Sponsor }) => (
     <View style={[styles.sponsorCard, item.is_highlighted && styles.sponsorHighlighted]}>
       {item.is_highlighted && (
-        <LinearGradient
-          colors={['rgba(255,215,0,0.2)', 'transparent']}
-          style={styles.highlightGradient}
-        />
+        <View style={[styles.highlightGradient, { backgroundColor: 'rgba(255,215,0,0.15)' }]} />
       )}
       
       {item.sponsor_avatar ? (
@@ -144,7 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   title: {
-    ...typography.subtitle,
+    ...typography.bodySmall,
     color: colors.textPrimary,
     flex: 1,
   },
@@ -192,7 +189,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    ...typography.subtitle,
+    ...typography.bodySmall,
     color: colors.textPrimary,
   },
   sponsorInfo: {

@@ -16,7 +16,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+// LinearGradient reemplazado por View simple (evita dependencia extra)
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -93,12 +93,9 @@ export function GoldenBoostPermanent({
   const renderInfoStep = () => (
     <View style={styles.content}>
       <View style={styles.iconContainer}>
-        <LinearGradient
-          colors={['#FFD700', '#FFA500', '#FF8C00']}
-          style={styles.iconGradient}
-        >
+        <View style={[styles.iconGradient, { backgroundColor: '#FFD700' }]}>
           <Ionicons name="diamond" size={48} color="#FFF" />
-        </LinearGradient>
+        </View>
       </View>
 
       <Text style={styles.title}>Golden Boost Permanente</Text>
