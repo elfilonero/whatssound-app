@@ -80,6 +80,8 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ href: null }} />
       {/* Keep history accessible but not as tab */}
       <Tabs.Screen name="history" options={{ href: null }} />
+      {/* Hall of Fame - accessible from Discover */}
+      <Tabs.Screen name="hall-of-fame" options={{ href: null }} />
     </Tabs>
   );
 }

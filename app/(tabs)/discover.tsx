@@ -383,6 +383,21 @@ export default function DiscoverScreen() {
       {/* ── DJs del momento ── */}
       <DJRanking limit={5} />
 
+      {/* ── Hall of Fame (Golden Boosts) ── */}
+      <TouchableOpacity 
+        style={styles.hallOfFameBanner}
+        onPress={() => router.push('/hall-of-fame' as any)}
+      >
+        <View style={styles.hofContent}>
+          <Text style={styles.hofIcon}>🏆</Text>
+          <View style={styles.hofText}>
+            <Text style={styles.hofTitle}>Hall of Fame</Text>
+            <Text style={styles.hofSubtitle}>Los DJs más reconocidos por la comunidad</Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color="#FFD700" />
+      </TouchableOpacity>
+
       {/* ── Próximas sesiones ── */}
       <UpcomingSessions limit={3} />
 
@@ -537,4 +552,39 @@ const styles = StyleSheet.create({
   nearbyMetaText: { ...typography.caption, color: colors.textMuted, fontSize: 11 },
   nearbyRight: { alignItems: 'center', gap: 2, marginLeft: spacing.sm },
   nearbyListeners: { ...typography.caption, color: colors.textSecondary, fontSize: 11 },
+
+  // Hall of Fame Banner
+  hallOfFameBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1a1a1a',
+    marginHorizontal: spacing.base,
+    marginVertical: spacing.md,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: '#FFD70040',
+  },
+  hofContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  hofIcon: {
+    fontSize: 32,
+  },
+  hofText: {
+    gap: 2,
+  },
+  hofTitle: {
+    ...typography.bodyBold,
+    color: '#FFD700',
+    fontSize: 16,
+  },
+  hofSubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontSize: 12,
+  },
 });
