@@ -23,6 +23,7 @@ export { SongQueue, MiniQueue, type QueuedSong } from './session/SongQueue';
 
 // Profile Components
 export { StreakCard, StreakBadge } from './profile/StreakCard';
+export { BoostCounter, BoostBadge } from './profile/BoostCounter';
 
 // Discover Components
 export { DJRanking } from './discover/DJRanking';
