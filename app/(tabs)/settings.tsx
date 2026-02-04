@@ -18,6 +18,7 @@ import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { useAuthStore } from '../../src/stores/authStore';
+import { StreakCard } from '../../src/components/profile/StreakCard';
 
 interface SettingItemProps {
   icon: string;
@@ -63,6 +64,11 @@ export default function SettingsScreen() {
           <Text style={styles.profileEdit}>Editar perfil →</Text>
         </View>
       </TouchableOpacity>
+
+      {/* Streak */}
+      <View style={styles.streakSection}>
+        <StreakCard />
+      </View>
 
       {/* Account */}
       <SectionHeader title="CUENTA" />
@@ -115,6 +121,7 @@ const styles = StyleSheet.create({
   profileName: { ...typography.h3, color: colors.textPrimary },
   profileBio: { ...typography.bodySmall, color: colors.textSecondary },
   profileEdit: { ...typography.captionBold, color: colors.primary, marginTop: spacing.xs },
+  streakSection: { paddingHorizontal: spacing.base },
   sectionHeader: {
     ...typography.captionBold, color: colors.textMuted, letterSpacing: 0.5,
     paddingHorizontal: spacing.base, paddingTop: spacing.lg, paddingBottom: spacing.xs,

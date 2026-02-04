@@ -25,6 +25,8 @@ import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { supabase } from '../../src/lib/supabase';
 import { shouldShowSeed } from '../../src/lib/seed-filter';
+import { DJRanking } from '../../src/components/discover/DJRanking';
+import { UpcomingSessions } from '../../src/components/discover/UpcomingSessions';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -377,6 +379,12 @@ export default function DiscoverScreen() {
           onPress={() => router.push(`/session/${session.id}` as any)}
         />
       ))}
+
+      {/* ── DJs del momento ── */}
+      <DJRanking limit={5} />
+
+      {/* ── Próximas sesiones ── */}
+      <UpcomingSessions limit={3} />
 
       <View style={{ height: spacing['3xl'] }} />
     </ScrollView>
