@@ -9,10 +9,18 @@
 
 import { Platform } from 'react-native';
 
-// Mock Audio para web (expo-av no disponible en web build)
-const Audio = Platform.OS === 'web' 
-  ? { setAudioModeAsync: async () => {}, Sound: class { async loadAsync() {} async playAsync() {} async unloadAsync() {} } }
-  : require('expo-av').Audio;
+// Importación condicional de expo-av (solo nativo)
+let Audio: any = { 
+  setAudioModeAsync: async () => {}, 
+  Sound: class { async loadAsync() {} async playAsync() {} async unloadAsync() {} } 
+};
+if (Platform.OS !== 'web') {
+  try {
+    Audio = require('expo-av').Audio;
+  } catch (e) {
+    console.warn('[Audio] expo-av not available');
+  }
+}
 
 // Estado global del modo de audio
 let isInitialized = false;

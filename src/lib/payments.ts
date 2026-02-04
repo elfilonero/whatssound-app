@@ -6,6 +6,7 @@
  */
 
 import { supabase } from './supabase';
+import { checkPaymentRateLimit, validatePaymentAmount } from './rate-limiter';
 
 // Tipos
 export type TransactionType = 'tip' | 'golden_boost' | 'permanent_sponsor';
@@ -59,13 +60,19 @@ export async function createTip(
   message?: string,
   sessionId?: string
 ): Promise<{ success: boolean; transaction?: Transaction; error?: string }> {
-  // Validaciones
-  if (amountCents < MIN_TIP_CENTS) {
-    return { success: false, error: `Mínimo €${(MIN_TIP_CENTS / 100).toFixed(2)}` };
+  // Rate limiting
+  const rateCheck = checkPaymentRateLimit(fromUserId);
+  if (!rateCheck.allowed) {
+    return { success: false, error: rateCheck.error };
   }
-  if (amountCents > MAX_TIP_CENTS) {
-    return { success: false, error: `Máximo €${(MAX_TIP_CENTS / 100).toFixed(2)}` };
+
+  // Validación de monto
+  const amountCheck = validatePaymentAmount(amountCents, 'tip');
+  if (!amountCheck.valid) {
+    return { success: false, error: amountCheck.error };
   }
+
+  // Validaciones adicionales
   if (fromUserId === toUserId) {
     return { success: false, error: 'No puedes enviarte propina a ti mismo' };
   }

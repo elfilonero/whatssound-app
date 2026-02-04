@@ -11,10 +11,21 @@
 
 import { Platform } from 'react-native';
 
-// Mock Audio para web (expo-av no disponible en web build)
-const Audio = Platform.OS === 'web' 
-  ? { Sound: class { async loadAsync() {} async playAsync() {} async unloadAsync() {} } }
-  : require('expo-av').Audio;
+// En web, re-exportamos desde sounds.web.ts
+// Este archivo solo se usa en nativo
+if (Platform.OS === 'web') {
+  console.log('[Sounds] Web platform detected, using Web Audio API');
+}
+
+// Importación condicional de expo-av (solo nativo)
+let Audio: any = { Sound: class { async loadAsync() {} async playAsync() {} async unloadAsync() {} } };
+if (Platform.OS !== 'web') {
+  try {
+    Audio = require('expo-av').Audio;
+  } catch (e) {
+    console.warn('[Sounds] expo-av not available');
+  }
+}
 
 // Cache de sonidos cargados
 const soundCache: Record<string, Audio.Sound> = {};
