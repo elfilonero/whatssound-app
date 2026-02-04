@@ -25,6 +25,7 @@ const colors = {
     primary: baseColors.textPrimary,
     secondary: baseColors.textSecondary,
     muted: baseColors.textMuted,
+    tertiary: baseColors.textMuted, // Alias for compatibility
   },
   surface: {
     base: baseColors.surface,
