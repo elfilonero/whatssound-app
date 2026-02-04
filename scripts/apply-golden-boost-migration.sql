@@ -158,6 +158,74 @@ ORDER BY p.golden_boosts_received DESC;
 GRANT SELECT ON ws_golden_boost_leaderboard TO authenticated;
 
 -- ============================================
+-- 14. GOLDEN BOOST PERMANENTE (€19.99)
+-- Tu nombre para siempre en el perfil del DJ
+-- ============================================
+
+-- Tabla de patrocinadores permanentes
+CREATE TABLE IF NOT EXISTS ws_golden_boost_permanent (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  from_user_id UUID NOT NULL REFERENCES ws_profiles(id) ON DELETE CASCADE,
+  to_dj_id UUID NOT NULL REFERENCES ws_profiles(id) ON DELETE CASCADE,
+  message TEXT, -- Mensaje personalizado opcional
+  amount_cents INT DEFAULT 1999, -- €19.99
+  created_at TIMESTAMPTZ DEFAULT now(),
+  display_order INT DEFAULT 0, -- Para ordenar en el perfil
+  is_highlighted BOOLEAN DEFAULT false, -- Destacado (compra extra €9.99)
+  CONSTRAINT unique_permanent_sponsor UNIQUE (from_user_id, to_dj_id)
+);
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_permanent_to_dj ON ws_golden_boost_permanent(to_dj_id);
+CREATE INDEX IF NOT EXISTS idx_permanent_created ON ws_golden_boost_permanent(created_at DESC);
+
+-- RLS
+ALTER TABLE ws_golden_boost_permanent ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "permanent_select_all" ON ws_golden_boost_permanent;
+DROP POLICY IF EXISTS "permanent_insert_own" ON ws_golden_boost_permanent;
+
+CREATE POLICY "permanent_select_all" ON ws_golden_boost_permanent FOR SELECT USING (true);
+CREATE POLICY "permanent_insert_own" ON ws_golden_boost_permanent FOR INSERT WITH CHECK (auth.uid() = from_user_id);
+
+-- Añadir contador de patrocinadores permanentes a perfiles
+ALTER TABLE ws_profiles ADD COLUMN IF NOT EXISTS permanent_sponsors_count INT DEFAULT 0;
+
+-- Trigger para actualizar contador
+CREATE OR REPLACE FUNCTION handle_permanent_sponsor()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE ws_profiles 
+  SET permanent_sponsors_count = permanent_sponsors_count + 1
+  WHERE id = NEW.to_dj_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_permanent_sponsor ON ws_golden_boost_permanent;
+CREATE TRIGGER on_permanent_sponsor
+AFTER INSERT ON ws_golden_boost_permanent
+FOR EACH ROW EXECUTE FUNCTION handle_permanent_sponsor();
+
+-- Vista de patrocinadores de un DJ
+CREATE OR REPLACE VIEW ws_dj_permanent_sponsors AS
+SELECT 
+  gb.to_dj_id as dj_id,
+  gb.from_user_id as sponsor_id,
+  p.display_name as sponsor_name,
+  p.avatar_url as sponsor_avatar,
+  gb.message,
+  gb.is_highlighted,
+  gb.created_at,
+  gb.display_order
+FROM ws_golden_boost_permanent gb
+JOIN ws_profiles p ON p.id = gb.from_user_id
+ORDER BY gb.is_highlighted DESC, gb.display_order ASC, gb.created_at ASC;
+
+GRANT SELECT ON ws_dj_permanent_sponsors TO authenticated;
+
+-- ============================================
 -- ✅ MIGRACIÓN COMPLETADA
 -- ============================================
-SELECT 'Golden Boost migration applied successfully!' as status;
+SELECT 'Golden Boost + Permanent Sponsors migration applied successfully!' as status;

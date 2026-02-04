@@ -36,6 +36,10 @@ export default function RevenuePage() {
     totalTips: 0,
     avgTipPerSession: 0,
     conversionRate: 0,
+    // Golden Boost Permanente
+    permanentSponsors: 0,
+    permanentRevenue: 0,
+    highlightedSponsors: 0,
   });
   const [tipsByDJ, setTipsByDJ] = useState<Array<{ dj: string; total: number; count: number; avg: number }>>([]);
   const [topTippers, setTopTippers] = useState<Array<{ name: string; total: number; count: number; avg: number }>>([]);
@@ -78,12 +82,34 @@ export default function RevenuePage() {
       const uniqueTippers = new Set(allTips.map(t => t.sender?.display_name).filter(Boolean));
       const conversionRate = totalUsers ? (uniqueTippers.size / totalUsers) * 100 : 0;
 
+      // Golden Boost Permanente stats
+      let permanentSponsors = 0;
+      let permanentRevenue = 0;
+      let highlightedSponsors = 0;
+      try {
+        const { data: permanentData } = await supabase
+          .from('ws_golden_boost_permanent')
+          .select('amount_cents, is_highlighted');
+        
+        if (permanentData) {
+          permanentSponsors = permanentData.length;
+          permanentRevenue = permanentData.reduce((sum, p) => sum + (p.amount_cents || 1999), 0) / 100;
+          highlightedSponsors = permanentData.filter(p => p.is_highlighted).length;
+        }
+      } catch (e) {
+        // Tabla puede no existir todavía
+        console.log('Permanent sponsors table not ready');
+      }
+
       setStats({
         totalRevenue,
         totalPlatformFees,
         totalTips: allTips.length,
         avgTipPerSession,
         conversionRate,
+        permanentSponsors,
+        permanentRevenue,
+        highlightedSponsors,
       });
 
       // Agrupar por DJ
@@ -236,18 +262,18 @@ export default function RevenuePage() {
         </View>
         <View style={s.stat}>
           <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
-            <Ionicons name="infinite" size={20} color="#FFD700"/>
+            <Ionicons name="diamond" size={20} color="#FFD700"/>
           </View>
-          <Text style={s.statVal}>€0.00</Text>
+          <Text style={s.statVal}>€{stats.permanentRevenue.toFixed(2)}</Text>
           <Text style={s.statLabel}>Revenue GB permanentes</Text>
-          <Text style={[s.statTrend, {color: colors.textMuted}]}>Compras €19.99</Text>
+          <Text style={[s.statTrend, {color: '#FFD700'}]}>{stats.permanentSponsors} patrocinadores</Text>
         </View>
         <View style={s.stat}>
           <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
-            <Ionicons name="analytics" size={20} color="#FFD700"/>
+            <Ionicons name="star" size={20} color="#FFD700"/>
           </View>
-          <Text style={s.statVal}>0</Text>
-          <Text style={s.statLabel}>Total compras GB</Text>
+          <Text style={s.statVal}>{stats.highlightedSponsors}</Text>
+          <Text style={s.statLabel}>Destacados (+€9.99)</Text>
         </View>
         <View style={s.stat}>
           <View style={[s.statIcon, {backgroundColor: '#FFD70018'}]}>
