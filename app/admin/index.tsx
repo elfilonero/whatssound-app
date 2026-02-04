@@ -128,11 +128,11 @@ export default function AdminDashboard() {
           { count: privateMessagesCount },
           { count: conversationsCount },
           { count: contactsCount },
-          // Golden Boost metrics
-          { count: goldenBoostsTotal },
-          { count: goldenBoostsWeek },
-          { data: usersWithBoosts },
-          { data: topDJData },
+          // Golden Boost metrics (may not exist yet)
+          goldenBoostsResult,
+          goldenBoostsWeekResult,
+          usersWithBoostsResult,
+          topDJResult,
         ] = await Promise.all([
           supabase.from('ws_profiles').select('*', { count: 'exact', head: true }),
           supabase.from('ws_sessions').select('*', { count: 'exact', head: true }),
@@ -176,11 +176,11 @@ export default function AdminDashboard() {
           privateMessages: privateMessagesCount || 0,
           conversations: conversationsCount || 0,
           contacts: contactsCount || 0,
-          // Golden Boost metrics
-          goldenBoostsTotal: goldenBoostsTotal || 0,
-          goldenBoostsThisWeek: goldenBoostsWeek || 0,
-          goldenBoostsAvailable: usersWithBoosts?.length || 0,
-          topDJByBoosts: topDJData?.[0]?.display_name || '-',
+          // Golden Boost metrics (safe access - table may not exist)
+          goldenBoostsTotal: goldenBoostsResult?.count || 0,
+          goldenBoostsThisWeek: goldenBoostsWeekResult?.count || 0,
+          goldenBoostsAvailable: usersWithBoostsResult?.data?.length || 0,
+          topDJByBoosts: topDJResult?.data?.[0]?.display_name || '-',
         });
 
         if (activeSessions && activeSessions.length > 0) {
