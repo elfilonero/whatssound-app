@@ -36,6 +36,9 @@ if (Platform.OS === 'web') {
 const SB = 'https://xyehncvvvprrqwnsefcr.supabase.co/rest/v1';
 const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
 
+// Siempre usar demo en vercel.app para mostrar mockups
+const USE_DEMO_DATA = true; // Cambiar a false cuando conectemos Supabase real
+
 function getHeaders() {
   let token = '';
   try { token = JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').access_token || ''; } catch {}
@@ -213,12 +216,7 @@ export default function GroupChatScreen() {
     if (!id) return;
     
     // Modo demo: usar mensajes mock
-    const isDemo = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || 
-       window.location.hostname.includes('vercel.app') ||
-       localStorage.getItem('demo_mode') === 'true');
-    
-    if (isDemo) {
+    if (USE_DEMO_DATA) {
       setMessages(MOCK_GROUP_MESSAGES);
       return;
     }
@@ -247,12 +245,7 @@ export default function GroupChatScreen() {
     if (!id) return;
     
     // Modo demo: usar info mock
-    const isDemo = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || 
-       window.location.hostname.includes('vercel.app') ||
-       localStorage.getItem('demo_mode') === 'true');
-    
-    if (isDemo) {
+    if (USE_DEMO_DATA) {
       setGroupName(MOCK_GROUP_INFO.name);
       setMemberCount(MOCK_GROUP_INFO.memberCount);
       return;
