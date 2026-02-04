@@ -28,7 +28,7 @@ export default function AccountActionsScreen() {
             • Tu perfil y foto{'\n'}
             • Historial de sesiones{'\n'}
             • Mensajes y grupos{'\n'}
-            • Propinas recibidas pendientes{'\n'}
+            • Decibelios recibidos pendientes{'\n'}
             • Seguidores y seguidos
           </Text>
           <View style={styles.confirmActions}>

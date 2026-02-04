@@ -30,7 +30,7 @@ interface Notif {
 const TABS = [
   { key: 'all', label: 'Todo' },
   { key: 'session', label: 'Sesiones' },
-  { key: 'tip', label: 'Propinas' },
+  { key: 'tip', label: 'Volumen' },
   { key: 'song', label: 'Canciones' },
 ] as const;
 
@@ -74,7 +74,7 @@ export default function NotificationsScreen() {
       setUserId(uid);
       const notifs: Notif[] = [];
 
-      // 1. Propinas recibidas (si soy DJ)
+      // 1. Volumen recibido (si soy DJ)
       const { data: tips } = await supabase
         .from('ws_tips')
         .select(`
@@ -91,7 +91,7 @@ export default function NotificationsScreen() {
           notifs.push({
             id: `tip-${tip.id}`,
             type: 'tip',
-            text: `${(tip.from_user as any)?.display_name || 'Alguien'} te dio propina €${tip.amount}`,
+            text: `${(tip.from_user as any)?.display_name || 'Alguien'} te dio volumen €${tip.amount}`,
             time: timeAgo(new Date(tip.created_at)),
             unread: false,
             icon: 'cash',

@@ -62,7 +62,7 @@ export default function ProfileScreen() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', id);
 
-      // Contar propinas dadas
+      // Contar decibelios dadas
       const { count: tipCount } = await supabase
         .from('ws_tips')
         .select('*', { count: 'exact', head: true })

@@ -20,7 +20,7 @@ export default function UpdateRequiredScreen() {
       <Text style={s.version}>Versión 2.1.0</Text>
       <Text style={s.subtitle}>Hay una nueva versión de WhatsSound con mejoras importantes. Actualiza para seguir usando la app.</Text>
       <View style={s.features}>
-        <Text style={s.feature}>✨ Nuevo sistema de propinas</Text>
+        <Text style={s.feature}>✨ Nuevo sistema de decibelios</Text>
         <Text style={s.feature}>🎧 Mejoras en el reproductor</Text>
         <Text style={s.feature}>🐛 Corrección de errores</Text>
       </View>

@@ -45,8 +45,8 @@ export default function TermsScreen() {
             <Text style={styles.body}>WhatsSound permite crear y participar en sesiones de música colaborativa. No debes usar el servicio para actividades ilegales, spam o acoso.</Text>
             <Text style={styles.heading}>3. Contenido musical</Text>
             <Text style={styles.body}>La música se reproduce a través de servicios de streaming autorizados. WhatsSound no almacena ni distribuye contenido musical.</Text>
-            <Text style={styles.heading}>4. Propinas</Text>
-            <Text style={styles.body}>Las propinas son voluntarias y no reembolsables. WhatsSound cobra una comisión del servicio sobre las propinas procesadas.</Text>
+            <Text style={styles.heading}>4. Volumen</Text>
+            <Text style={styles.body}>Los decibelios son voluntarios y no reembolsables. WhatsSound cobra una comisión del servicio sobre los decibelios procesadas.</Text>
             <Text style={styles.heading}>5. Cuenta</Text>
             <Text style={styles.body}>Eres responsable de mantener la seguridad de tu cuenta. No compartas tus credenciales.</Text>
           </>

@@ -29,7 +29,7 @@ const NOTIF_SETTINGS: { section: string; items: NotifToggle[] }[] = [
     ],
   },
   {
-    section: 'PROPINAS',
+    section: 'VOLUMEN',
     items: [
       { key: 'tip_received', title: 'Volumen recibido', subtitle: 'Cuando recibes una decibelios como DJ', icon: 'cash', default: true },
       { key: 'tip_message', title: 'Mensaje con propina', subtitle: 'Cuando una decibelios incluyen mensaje', icon: 'chatbox', default: true },
