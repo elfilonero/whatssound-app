@@ -332,3 +332,6 @@ export default function DJDashboardPro() {
       </ScrollView>
     </View>
   );
+}
+
+export default DJProDashboard;

@@ -22,7 +22,7 @@ import { Avatar } from '../src/components/ui/Avatar';
 import { supabase } from '../src/lib/supabase';
 import { useAuthStore } from '../src/stores/authStore';
 import { isDemoMode, isTestMode } from '../src/lib/demo';
-import { styles as s } from './src/styles/contacts.styles';
+import { styles as s } from '../src/styles/contacts.styles';
 
 // Contactos mock para modo demo
 const MOCK_CONTACTS = [

@@ -23,7 +23,7 @@ import { spacing, borderRadius } from '../src/theme/spacing';
 import { supabase } from '../src/lib/supabase';
 import { useAuthStore } from '../src/stores/authStore';
 import { isDemoMode, isTestMode } from '../src/lib/demo';
-import { styles as s } from './src/styles/inviteContact.styles';
+import { styles as s } from '../src/styles/inviteContact.styles';
 
 // Lista de países comunes
 const COUNTRIES = [

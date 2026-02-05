@@ -2,9 +2,9 @@
  * WhatsSound — Contacts Styles
  */
 import { StyleSheet } from 'react-native';
-import { colors } from './theme/colors';
-import { typography } from './theme/typography';
-import { spacing, borderRadius } from './theme/spacing';
+import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
+import { spacing, borderRadius } from '../theme/spacing';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,

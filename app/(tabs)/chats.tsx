@@ -107,7 +107,14 @@ function formatTimestamp(date: Date): string {
 }
 
 interface ChatRowProps {
-  chat: { id: string; name?: string; members?: { user_id: string; profile?: { display_name?: string } }[] };
+  chat: { 
+    id: string; 
+    name?: string; 
+    members?: { user_id: string; profile?: { display_name?: string } }[];
+    lastMessage?: { text?: string; senderId?: string; time?: string };
+    contact?: { displayName?: string; avatar?: string | null };
+    unreadCount?: number;
+  };
   onPress: () => void;
 }
 
