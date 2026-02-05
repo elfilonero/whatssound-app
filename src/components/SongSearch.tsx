@@ -71,7 +71,7 @@ export default function SongSearch({
     setHasSearched(true);
 
     try {
-      console.log('Buscando canciones:', searchQuery);
+      // console.log('Buscando canciones:', searchQuery);
       const tracks = await searchTracks(searchQuery.trim(), maxResults);
       
       // Filtrar tracks sin preview o con datos incompletos

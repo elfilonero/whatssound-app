@@ -41,7 +41,7 @@ export async function initBackgroundAudio(): Promise<void> {
     });
     
     isInitialized = true;
-    console.log('[BackgroundAudio] Modo de audio inicializado');
+    // console.log('[BackgroundAudio] Modo de audio inicializado');
   } catch (error) {
     console.error('[BackgroundAudio] Error al inicializar:', error);
   }
@@ -141,7 +141,7 @@ export function setMediaSessionHandlers(handlers: {
       navigator.mediaSession.setActionHandler('seekbackward', handlers.seekBackward);
     }
     
-    console.log('[BackgroundAudio] Media Session handlers configurados');
+    // console.log('[BackgroundAudio] Media Session handlers configurados');
   } catch (error) {
     console.warn('[BackgroundAudio] Error configurando handlers:', error);
   }

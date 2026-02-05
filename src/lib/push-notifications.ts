@@ -75,7 +75,7 @@ export async function sendPushNotification(
     return false;
   }
 
-  console.log('[Push] Notification queued for:', userId);
+  // console.log('[Push] Notification queued for:', userId);
   return true;
 }
 
@@ -104,7 +104,7 @@ export async function sendPushToMany(
     return 0;
   }
 
-  console.log('[Push] Notifications queued:', count);
+  // console.log('[Push] Notifications queued:', count);
   return count || userIds.length;
 }
 
@@ -136,7 +136,7 @@ export async function notifyDJLive(
     .eq('following_id', djId);
 
   if (!followers || followers.length === 0) {
-    console.log('[Push] DJ has no followers');
+    // console.log('[Push] DJ has no followers');
     return 0;
   }
 

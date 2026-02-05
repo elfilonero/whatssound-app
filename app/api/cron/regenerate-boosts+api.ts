@@ -79,7 +79,7 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log(`[Cron] Golden Boosts regenerados. ${usersWithBoost} usuarios, ${bonusGiven} bonus.`);
+    // console.log(`[Cron] Golden Boosts regenerados. ${usersWithBoost} usuarios, ${bonusGiven} bonus.`);
 
     return new Response(
       JSON.stringify({

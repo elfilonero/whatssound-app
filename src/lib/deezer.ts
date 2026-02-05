@@ -86,7 +86,7 @@ async function deezerRequest(endpoint: string, params?: Record<string, string>):
   // Check cache first
   const cached = getFromCache(cacheKey);
   if (cached) {
-    console.log('Deezer cache hit:', cacheKey);
+    // console.log('Deezer cache hit:', cacheKey);
     return cached;
   }
 
@@ -95,7 +95,7 @@ async function deezerRequest(endpoint: string, params?: Record<string, string>):
     const searchParams = new URLSearchParams(params || {});
     const url = `/api/deezer?${searchParams.toString()}`;
     
-    console.log('Deezer API request:', url);
+    // console.log('Deezer API request:', url);
     
     const response = await fetch(url);
     
@@ -118,7 +118,7 @@ async function deezerRequest(endpoint: string, params?: Record<string, string>):
       const directUrl = `https://api.deezer.com/${endpoint}`;
       const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(directUrl)}`;
       
-      console.log('Trying CORS proxy fallback:', corsProxyUrl);
+      // console.log('Trying CORS proxy fallback:', corsProxyUrl);
       
       const fallbackResponse = await fetch(corsProxyUrl);
       const fallbackData = await fallbackResponse.json();
@@ -283,5 +283,5 @@ export function formatDuration(seconds: number): string {
  */
 export function clearCache(): void {
   cache.clear();
-  console.log('Deezer cache cleared');
+  // console.log('Deezer cache cleared');
 }

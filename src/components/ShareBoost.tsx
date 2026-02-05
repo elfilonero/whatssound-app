@@ -48,7 +48,7 @@ export function ShareBoost({ djName, sessionName, totalBoosts, onShare }: ShareB
       }
       onShare?.();
     } catch (error) {
-      console.log('Share cancelled or failed');
+      // console.log('Share cancelled or failed');
     }
   };
 

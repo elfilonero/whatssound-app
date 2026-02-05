@@ -14,7 +14,7 @@ import { Platform } from 'react-native';
 // En web, re-exportamos desde sounds.web.ts
 // Este archivo solo se usa en nativo
 if (Platform.OS === 'web') {
-  console.log('[Sounds] Web platform detected, using Web Audio API');
+  // console.log('[Sounds] Web platform detected, using Web Audio API');
 }
 
 // Importación condicional de expo-av (solo nativo)
@@ -144,7 +144,7 @@ async function playGoldenBoostSoundNative(): Promise<void> {
     //   }
     // });
     
-    console.log('[Sounds] Golden Boost sound (native) - pendiente de archivo');
+    // console.log('[Sounds] Golden Boost sound (native) - pendiente de archivo');
   } catch (error) {
     console.warn('[Sounds] Error reproduciendo Golden Boost nativo:', error);
   }
@@ -232,7 +232,7 @@ export async function playNotificationSound(): Promise<void> {
  */
 export async function preloadSounds(): Promise<void> {
   // TODO: Implementar pre-carga de archivos de sonido
-  console.log('[Sounds] Pre-carga de sonidos iniciada');
+  // console.log('[Sounds] Pre-carga de sonidos iniciada');
 }
 
 /**

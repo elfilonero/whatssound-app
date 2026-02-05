@@ -164,7 +164,7 @@ export function useBackgroundAudio(options: UseBackgroundAudioOptions = {}) {
     
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (__DEV__) {
-        console.log('[useBackgroundAudio] App state:', nextAppState);
+        // console.log('[useBackgroundAudio] App state:', nextAppState);
       }
       
       // El audio continúa automáticamente gracias a la configuración de expo-av

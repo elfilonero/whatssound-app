@@ -104,7 +104,7 @@ export default function GenresScreen() {
 
   const handleContinue = () => {
     // Guardar géneros seleccionados (en producción: guardar en Supabase)
-    // console.log('[Genres] Selected:', selected);
+    // // console.log('[Genres] Selected:', selected);
     router.replace('/(auth)/login');
   };
 

@@ -69,7 +69,7 @@ export function usePushNotifications(userId?: string): UsePushNotificationsRetur
   const registerForPush = useCallback(async (): Promise<boolean> => {
     if (Platform.OS === 'web') {
       // Web Push API (futuro)
-      console.log('[Push] Web push not implemented yet');
+      // console.log('[Push] Web push not implemented yet');
       return false;
     }
 

@@ -12,7 +12,8 @@
     "test:nav": "node scripts/test-navigation.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm run test:nav && npm test && npm run test:e2e"
+    "test:all": "npm run test:nav && npm test && npm run test:e2e",
+    "security:check": "node scripts/security-check.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

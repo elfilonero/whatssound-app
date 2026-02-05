@@ -92,7 +92,7 @@ export function useAudioSync(options: UseAudioSyncOptions): UseAudioSyncReturn {
       payload: syncState,
     });
 
-    console.log('[AudioSync] DJ broadcast:', currentTimeMs, 'ms');
+    // console.log('[AudioSync] DJ broadcast:', currentTimeMs, 'ms');
   }, [isDJ, songId, currentTimeMs, isPlaying]);
 
   // Listener: Sync to master position
@@ -109,7 +109,7 @@ export function useAudioSync(options: UseAudioSyncOptions): UseAudioSyncReturn {
 
     if (diff > HARD_RESYNC_MS) {
       // Hard resync - jump directly
-      console.log(`[AudioSync] Hard resync: ${diff}ms difference`);
+      // console.log(`[AudioSync] Hard resync: ${diff}ms difference`);
       setIsSyncing(true);
       onSeekTo(expectedPosition);
       setTimeout(() => {
@@ -118,7 +118,7 @@ export function useAudioSync(options: UseAudioSyncOptions): UseAudioSyncReturn {
       }, 500);
     } else if (diff > SYNC_TOLERANCE_MS) {
       // Soft resync - gradual adjustment
-      console.log(`[AudioSync] Soft resync: ${diff}ms difference`);
+      // console.log(`[AudioSync] Soft resync: ${diff}ms difference`);
       setIsSyncing(true);
       onSeekTo(expectedPosition);
       setTimeout(() => {
@@ -157,7 +157,7 @@ export function useAudioSync(options: UseAudioSyncOptions): UseAudioSyncReturn {
 
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        console.log('[AudioSync] Connected to sync channel');
+        // console.log('[AudioSync] Connected to sync channel');
         onSyncStatusChange?.('synced');
       } else if (status === 'CHANNEL_ERROR') {
         console.error('[AudioSync] Channel error');

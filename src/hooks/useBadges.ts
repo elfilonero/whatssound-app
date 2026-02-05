@@ -111,7 +111,7 @@ export function useBadges(): UseBadgesReturn {
             earnedAt: new Date().toISOString(),
           };
           setEarnedBadges(prev => [...prev, newBadge]);
-          console.log(`[Badges] Awarded: ${badge.name} ${badge.icon}`);
+          // console.log(`[Badges] Awarded: ${badge.name} ${badge.icon}`);
           return badge;
         }
       }

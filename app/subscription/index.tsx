@@ -195,7 +195,7 @@ export default function SubscriptionPage() {
   const handleSelectPlan = (tier: SubscriptionTier) => {
     if (tier === 'free') return;
     // TODO: Integrar Stripe checkout
-    // console.log('Seleccionado:', tier);
+    // // console.log('Seleccionado:', tier);
   };
 
   return (

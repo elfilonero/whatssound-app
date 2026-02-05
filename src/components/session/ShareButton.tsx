@@ -56,7 +56,7 @@ export function ShareButton({
       });
       
       if (result.action === Share.sharedAction) {
-        console.log('[Share] Compartido correctamente');
+        // console.log('[Share] Compartido correctamente');
       }
     } catch (error) {
       console.error('[Share] Error:', error);

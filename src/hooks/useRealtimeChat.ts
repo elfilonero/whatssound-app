@@ -95,7 +95,7 @@ export function useRealtimeChat(sessionId: string, userId?: string) {
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
             reconnectAttempts.current = 0;
-            console.log('[Chat] Conectado a sesión:', sessionId);
+            // console.log('[Chat] Conectado a sesión:', sessionId);
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.error('[Chat] Error en canal, reconectando...');
             const delay = getBackoffDelay(reconnectAttempts.current);

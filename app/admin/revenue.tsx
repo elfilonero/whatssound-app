@@ -98,7 +98,7 @@ export default function RevenuePage() {
         }
       } catch (e) {
         // Tabla puede no existir todavía
-        // console.log('Permanent sponsors table not ready');
+        // // console.log('Permanent sponsors table not ready');
       }
 
       setStats({

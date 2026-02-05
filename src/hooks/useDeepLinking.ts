@@ -11,7 +11,7 @@ export function useDeepLinking() {
   const router = useRouter();
 
   const handleUrl = useCallback((url: string) => {
-    console.log('[DeepLink] Received:', url);
+    // console.log('[DeepLink] Received:', url);
     
     try {
       const parsed = Linking.parse(url);
@@ -23,7 +23,7 @@ export function useDeepLinking() {
       if (path.startsWith('session/') || path.startsWith('join/')) {
         const sessionId = path.split('/')[1];
         if (sessionId) {
-          console.log('[DeepLink] Opening session:', sessionId);
+          // console.log('[DeepLink] Opening session:', sessionId);
           router.push(`/session/${sessionId}`);
           return;
         }
@@ -33,7 +33,7 @@ export function useDeepLinking() {
       if (path.startsWith('profile/')) {
         const profileId = path.split('/')[1];
         if (profileId) {
-          console.log('[DeepLink] Opening profile:', profileId);
+          // console.log('[DeepLink] Opening profile:', profileId);
           router.push(`/profile/${profileId}`);
           return;
         }
@@ -43,7 +43,7 @@ export function useDeepLinking() {
       if (path.startsWith('scheduled/')) {
         const scheduledId = path.split('/')[1];
         if (scheduledId) {
-          console.log('[DeepLink] Opening scheduled session:', scheduledId);
+          // console.log('[DeepLink] Opening scheduled session:', scheduledId);
           router.push(`/session/scheduled/${scheduledId}`);
           return;
         }
@@ -53,13 +53,13 @@ export function useDeepLinking() {
       if (path.startsWith('dj/')) {
         const djId = path.split('/')[1];
         if (djId) {
-          console.log('[DeepLink] Opening DJ profile:', djId);
+          // console.log('[DeepLink] Opening DJ profile:', djId);
           router.push(`/profile/dj-public?id=${djId}`);
           return;
         }
       }
 
-      console.log('[DeepLink] Unknown path:', path);
+      // console.log('[DeepLink] Unknown path:', path);
     } catch (error) {
       console.error('[DeepLink] Parse error:', error);
     }

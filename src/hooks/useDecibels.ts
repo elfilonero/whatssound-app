@@ -105,7 +105,7 @@ export function useDecibels(): UseDecibelsReturn {
       }));
     }
 
-    console.log(`[Decibels] Earned ${amount} dB in session ${sessionId}`);
+    // console.log(`[Decibels] Earned ${amount} dB in session ${sessionId}`);
   }, [user?.id]);
 
   // Give decibels to a DJ
@@ -116,7 +116,7 @@ export function useDecibels(): UseDecibelsReturn {
   ): Promise<boolean> => {
     if (!user?.id || amount <= 0) return false;
     if (state.available < amount) {
-      console.log('[Decibels] Not enough dB available');
+      // console.log('[Decibels] Not enough dB available');
       return false;
     }
 
@@ -178,7 +178,7 @@ export function useDecibels(): UseDecibelsReturn {
       totalGiven: newTotalGiven,
     }));
 
-    console.log(`[Decibels] Gave ${amount} dB to ${toUserId}`);
+    // console.log(`[Decibels] Gave ${amount} dB to ${toUserId}`);
     return true;
   }, [user?.id, state.available, state.totalGiven]);
 

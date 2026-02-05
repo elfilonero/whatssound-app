@@ -55,7 +55,7 @@ export function useGoldenBoostRealtime({
             filter: `session_id=eq.${sessionId}`,
           },
           async (payload) => {
-            console.log('[GoldenBoostRealtime] Nuevo boost:', payload);
+            // console.log('[GoldenBoostRealtime] Nuevo boost:', payload);
             
             const record = payload.new as {
               id: string;
@@ -97,7 +97,7 @@ export function useGoldenBoostRealtime({
           }
         )
         .subscribe((status) => {
-          console.log('[GoldenBoostRealtime] Status:', status);
+          // console.log('[GoldenBoostRealtime] Status:', status);
           setIsConnected(status === 'SUBSCRIBED');
         });
     };

@@ -61,7 +61,7 @@ export async function createPaymentIntent(
       metadata,
     };
     mockPayments.set(intent.id, intent);
-    console.log('[Stripe Mock] PaymentIntent created:', intent.id);
+    // console.log('[Stripe Mock] PaymentIntent created:', intent.id);
     return intent;
   }
 
@@ -83,7 +83,7 @@ export async function confirmPaymentIntent(paymentIntentId: string): Promise<Pay
     }
     intent.status = 'succeeded';
     mockPayments.set(paymentIntentId, intent);
-    console.log('[Stripe Mock] PaymentIntent confirmed:', paymentIntentId);
+    // console.log('[Stripe Mock] PaymentIntent confirmed:', paymentIntentId);
     return intent;
   }
 
@@ -101,7 +101,7 @@ export async function cancelPaymentIntent(paymentIntentId: string): Promise<Paym
     }
     intent.status = 'canceled';
     mockPayments.set(paymentIntentId, intent);
-    console.log('[Stripe Mock] PaymentIntent canceled:', paymentIntentId);
+    // console.log('[Stripe Mock] PaymentIntent canceled:', paymentIntentId);
     return intent;
   }
 
@@ -138,7 +138,7 @@ export async function getOrCreateCustomer(
         metadata: { user_id: userId },
       };
       mockCustomers.set(userId, customer);
-      console.log('[Stripe Mock] Customer created:', customer.id);
+      // console.log('[Stripe Mock] Customer created:', customer.id);
     }
     return customer;
   }

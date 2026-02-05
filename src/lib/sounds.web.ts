@@ -32,7 +32,7 @@ export async function playGoldenBoostSound(): Promise<void> {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.5);
   } catch (e) {
-    console.log('[Sounds] Web Audio not available');
+    // console.log('[Sounds] Web Audio not available');
   }
 }
 

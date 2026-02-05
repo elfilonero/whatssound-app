@@ -128,7 +128,7 @@ export function useReferrals(): UseReferralsReturn {
 
     if (!error) {
       setMyCode(code);
-      console.log('[Referrals] Created code:', code);
+      // console.log('[Referrals] Created code:', code);
     }
 
     return code;
@@ -162,7 +162,7 @@ export function useReferrals(): UseReferralsReturn {
     const code = await getOrCreateCode();
     const url = `https://whatssound-app.vercel.app/join?code=${code}`;
     await Clipboard.setStringAsync(url);
-    console.log('[Referrals] Copied to clipboard');
+    // console.log('[Referrals] Copied to clipboard');
   }, [getOrCreateCode]);
 
   // Apply a referral code (for new users during onboarding)
@@ -177,13 +177,13 @@ export function useReferrals(): UseReferralsReturn {
       .single();
 
     if (!referrer) {
-      console.log('[Referrals] Invalid code:', code);
+      // console.log('[Referrals] Invalid code:', code);
       return false;
     }
 
     // Don't allow self-referral
     if (referrer.id === user.id) {
-      console.log('[Referrals] Cannot self-refer');
+      // console.log('[Referrals] Cannot self-refer');
       return false;
     }
 
@@ -199,7 +199,7 @@ export function useReferrals(): UseReferralsReturn {
       });
 
     if (!error) {
-      console.log('[Referrals] Applied code from:', referrer.id);
+      // console.log('[Referrals] Applied code from:', referrer.id);
       // TODO: Award badges/rewards here
       return true;
     }

@@ -104,7 +104,7 @@ export function useListeningStreak(): UseListeningStreakReturn {
         setTimeout(() => setIsNewStreak(false), 5000);
       }
 
-      console.log(`[Streak] ${isConsecutive ? 'Extended' : 'Started'} streak: ${newStreak} days`);
+      // console.log(`[Streak] ${isConsecutive ? 'Extended' : 'Started'} streak: ${newStreak} days`);
     }
   }, [user?.id, streak]);
 

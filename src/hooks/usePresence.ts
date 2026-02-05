@@ -48,7 +48,7 @@ export function usePresence(sessionId: string | undefined): UsePresenceReturn {
     // Función para reconectar con backoff
     const attemptReconnect = () => {
       const delay = getBackoffDelay(reconnectAttempts.current);
-      console.log(`[Presence] Reconectando en ${delay/1000}s (intento ${reconnectAttempts.current + 1})`);
+      // console.log(`[Presence] Reconectando en ${delay/1000}s (intento ${reconnectAttempts.current + 1})`);
       setIsReconnecting(true);
       
       reconnectTimeout.current = setTimeout(() => {
@@ -87,10 +87,10 @@ export function usePresence(sessionId: string | undefined): UsePresenceReturn {
           setCount(presentUsers.length);
         })
         .on('presence', { event: 'join' }, ({ newPresences }) => {
-          console.log('[Presence] Usuario entró:', newPresences);
+          // console.log('[Presence] Usuario entró:', newPresences);
         })
         .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-          console.log('[Presence] Usuario salió:', leftPresences);
+          // console.log('[Presence] Usuario salió:', leftPresences);
         });
 
       channel.subscribe(async (status) => {
@@ -107,14 +107,14 @@ export function usePresence(sessionId: string | undefined): UsePresenceReturn {
           };
           
           await channel.track(presenceData);
-          console.log('[Presence] Conectado a sesión:', sessionId);
+          // console.log('[Presence] Conectado a sesión:', sessionId);
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           setIsConnected(false);
           console.error('[Presence] Error en canal, reconectando...');
           attemptReconnect();
         } else if (status === 'CLOSED') {
           setIsConnected(false);
-          console.log('[Presence] Canal cerrado');
+          // console.log('[Presence] Canal cerrado');
         }
       });
     };
@@ -130,7 +130,7 @@ export function usePresence(sessionId: string | undefined): UsePresenceReturn {
       channel.untrack();
       supabase.removeChannel(channel);
       setIsConnected(false);
-      console.log('[Presence] Desconectado de sesión:', sessionId);
+      // console.log('[Presence] Desconectado de sesión:', sessionId);
     };
   }, [sessionId, user?.id, user?.user_metadata?.display_name, user?.user_metadata?.avatar_url]);
 
