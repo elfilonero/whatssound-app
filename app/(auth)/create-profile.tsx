@@ -21,7 +21,7 @@ import { spacing, borderRadius } from '../../src/theme/spacing';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { supabase } from '../../src/lib/supabase';
-import { isTestMode, getOrCreateTestUser, clearTestNeedsProfile } from '../../src/lib/demo';
+import { isDemoMode, clearNeedsProfile, getPendingPhone } from '../../src/lib/demo';
 import { useAuthStore } from '../../src/stores/authStore';
 
 const GENRES = [
@@ -30,9 +30,16 @@ const GENRES = [
   'R&B', 'House', 'Trap', 'Bachata', 'Salsa',
 ];
 
+// Generar UUID determinista desde teléfono
+function phoneToUUID(phone: string): string {
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const hex = cleanPhone.padStart(12, '0').slice(-12);
+  return `aaaa0001-0000-0000-0000-${hex}`;
+}
+
 export default function CreateProfileScreen() {
   const router = useRouter();
-  const { setProfile, user } = useAuthStore();
+  const { setProfile } = useAuthStore();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -54,123 +61,93 @@ export default function CreateProfileScreen() {
     setError('');
 
     try {
-      // Modo test: actualizar perfil existente o crear uno
-      if (isTestMode()) {
-        const testProfile = await getOrCreateTestUser();
-        if (testProfile) {
-          // Actualizar con los datos del formulario
-          const { error: updateError } = await supabase
-            .from('ws_profiles')
-            .update({
-              display_name: name.trim(),
-              bio: bio.trim() || null,
-              genres: selectedGenres,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', testProfile.id);
-
-          if (updateError) {
-            console.warn('Error updating profile:', updateError);
-          }
-
-          // Guardar user + session + profile en el store
-          // AuthGate verifica 'user', no solo 'profile'
-          useAuthStore.setState({
-            user: {
-              id: testProfile.id,
-              email: `${testProfile.username}@test.whatssound.app`,
-              app_metadata: {},
-              user_metadata: { display_name: name.trim() },
-              aud: 'authenticated',
-              created_at: new Date().toISOString(),
-            } as any,
-            session: {
-              access_token: 'test-token',
-              refresh_token: 'test-refresh',
-              expires_at: Math.floor(Date.now() / 1000) + 86400,
-              user: { id: testProfile.id },
-            } as any,
-            profile: {
-              id: testProfile.id,
-              display_name: name.trim(),
-              username: testProfile.username,
-              avatar_url: testProfile.avatar_url,
-              is_dj: testProfile.is_dj,
-              bio: bio.trim(),
-              is_verified: false,
-              dj_name: null,
-              genres: selectedGenres,
-              role: 'user',
-            },
-            initialized: true,
-            loading: false,
-          });
-
-          // Clear the flag that was blocking auto-auth
-          clearTestNeedsProfile();
-          
-          router.replace('/(auth)/permissions');
-        }
-        setLoading(false);
-        return;
-      }
-
-      // Producción: obtener usuario autenticado y crear/actualizar perfil
-      const { data: { user } } = await supabase.auth.getUser();
+      // Obtener teléfono pendiente
+      const pendingPhone = getPendingPhone();
       
-      if (!user) {
-        setError('Sesión expirada. Vuelve a iniciar sesión.');
+      if (!pendingPhone) {
+        setError('No se encontró el teléfono. Vuelve a iniciar sesión.');
         setLoading(false);
         return;
       }
 
-      // Generar username desde nombre
-      const username = name.trim().toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .slice(0, 15) + Math.floor(Math.random() * 1000);
+      // Generar ID y username desde teléfono
+      const odUserId = phoneToUUID(pendingPhone);
+      const cleanPhone = pendingPhone.replace(/[^0-9]/g, '');
+      const username = `user_${cleanPhone.slice(-6)}`;
 
-      // Crear o actualizar perfil
+      // Crear o actualizar perfil en Supabase
       const { data: profile, error: profileError } = await supabase
         .from('ws_profiles')
         .upsert({
-          id: user.id,
+          id: odUserId,
           display_name: name.trim(),
           username,
           bio: bio.trim() || null,
           genres: selectedGenres,
           is_dj: false,
           is_seed: false,
+          phone: pendingPhone,
         })
         .select()
         .single();
 
       if (profileError) {
+        console.error('Error creating profile:', profileError);
         setError('Error al crear perfil. Inténtalo de nuevo.');
         setLoading(false);
         return;
       }
 
-      setProfile({
-        id: profile.id,
-        display_name: profile.display_name,
-        username: profile.username,
-        avatar_url: profile.avatar_url,
-        is_dj: profile.is_dj,
-        bio: profile.bio || '',
-        is_verified: profile.is_verified || false,
-        dj_name: profile.dj_name || null,
-        genres: profile.genres || [],
-        role: profile.role || 'user',
+      // Guardar en auth store
+      useAuthStore.setState({
+        user: {
+          id: profile.id,
+          email: `${username}@test.whatssound.app`,
+          app_metadata: {},
+          user_metadata: { display_name: name.trim() },
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+        } as any,
+        session: {
+          access_token: 'test-token-' + cleanPhone.slice(-6),
+          refresh_token: 'test-refresh',
+          expires_at: Math.floor(Date.now() / 1000) + 86400,
+          user: { id: profile.id },
+        } as any,
+        profile: {
+          id: profile.id,
+          display_name: profile.display_name,
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+          is_dj: profile.is_dj,
+          bio: profile.bio || '',
+          is_verified: profile.is_verified || false,
+          dj_name: profile.dj_name || null,
+          genres: profile.genres || [],
+          role: profile.role || 'user',
+        },
+        initialized: true,
+        loading: false,
       });
 
+      // Limpiar flag de needs profile
+      clearNeedsProfile();
+      
       // Ir a permisos
       router.replace('/(auth)/permissions');
     } catch (e: unknown) {
+      console.error('Error:', e);
       setError('Error inesperado. Inténtalo de nuevo.');
     }
 
     setLoading(false);
   };
+
+  // En modo demo no debería llegar aquí
+  if (isDemoMode()) {
+    router.replace('/(tabs)');
+    return null;
+  }
 
   return (
     <ScrollView
@@ -211,6 +188,7 @@ export default function CreateProfileScreen() {
         value={name}
         onChangeText={setName}
         maxLength={25}
+        autoCapitalize="words"
       />
 
       <Input
@@ -243,12 +221,10 @@ export default function CreateProfileScreen() {
       </View>
 
       {/* Test mode indicator */}
-      {isTestMode() && (
-        <View style={styles.testBadge}>
-          <Ionicons name="flask" size={14} color={colors.warning} />
-          <Text style={styles.testBadgeText}>Modo demo</Text>
-        </View>
-      )}
+      <View style={styles.testBadge}>
+        <Ionicons name="flask" size={14} color={colors.warning} />
+        <Text style={styles.testBadgeText}>Modo pruebas</Text>
+      </View>
 
       <View style={styles.buttonContainer}>
         <Button
