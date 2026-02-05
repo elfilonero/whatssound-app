@@ -1,98 +1,46 @@
-# Changelog - WhatsSound
+# Changelog
 
-## [4.0.0] - 2026-02-04 — Golden Boost System
+## [v0.1.0] - 2026-02-05 - Alfa Funcional 🎉
 
-### 🌟 Nueva Funcionalidad: Golden Boost
-Sistema de reconocimiento inspirado en el "Botón de Oro" de Got Talent.
+Primera versión funcional de WhatsSound.
 
-#### Mecánica
-- **1 Golden Boost por semana** (regenera domingos a medianoche)
-- **+1 extra** si escuchas 5 sesiones diferentes en la semana
-- **Compra opcional** de boosts adicionales (€4.99)
-- **Patrocinio Permanente** (€19.99) - Apareces siempre en el perfil del DJ
+### ✨ Features
+- **Auth completa** - OTP + verificación teléfono
+- **Sesiones musicales** - Crear, unirse, votar canciones
+- **Búsqueda música** - Integración Deezer real
+- **Propinas** - Sistema de tips + Golden Boosts
+- **Chats** - Conversaciones 1:1 y grupos
+- **Admin** - Panel de administración completo
+- **Suscripciones** - 3 tiers (Free, Pro, Business)
+- **Dashboard DJ** - Stats en tiempo real
 
-#### Badges de Reconocimiento
-| Boosts Recibidos | Badge |
-|------------------|-------|
-| 10+ | 🌟 Rising Star |
-| 50+ | ⭐ Fan Favorite |
-| 100+ | 👑 Legend |
+### 🔒 Seguridad
+- RLS en 40/40 tablas Supabase
+- Rate limiting por acción
+- Validación de inputs (XSS, SQL injection)
+- Tests de seguridad automatizados
 
-#### Componentes Añadidos
-- `GoldenBoostButton` - Botón animado en sesiones
-- `GoldenBoostShare` - Compartir logros
-- `GoldenBoostPermanent` - Modal de patrocinio
-- `PermanentSponsors` - Lista en perfil DJ
-- `GoldenBadgeFull` - Badge con progreso
+### 📊 Métricas
+- 44,729 líneas de código
+- 284 tests (unit, integration, security, e2e)
+- 95 rutas verificadas
+- Escalabilidad: 9/10
 
-#### Pantallas Actualizadas
-- `session/[id].tsx` - Botón Golden Boost
-- `profile/[id].tsx` - Badge y patrocinadores
-- `settings.tsx` - Historial de boosts
-- `discover.tsx` - Banner Hall of Fame
-- `hall-of-fame.tsx` - Nueva pantalla de ranking
+### 🚀 Deploy
+- Vercel: https://whatssound-app.vercel.app
+- Supabase: Producción activa
 
-#### Dashboard Admin
-- KPIs de Golden Boost (total, esta semana, comprados)
-- Revenue por Golden Boost
-- Métricas de engagement
-
-#### Base de Datos
-```sql
--- Nuevas columnas en ws_profiles
-golden_boost_available INT DEFAULT 1
-golden_boost_last_reset TIMESTAMPTZ
-golden_boosts_received INT DEFAULT 0
-golden_boosts_given INT DEFAULT 0
-golden_badge TEXT DEFAULT 'none'
-permanent_sponsors_count INT DEFAULT 0
-
--- Nueva tabla
-ws_golden_boost_permanent (patrocinadores permanentes)
-```
-
-### 🎧 Background Audio
-- Música continúa con pantalla bloqueada
-- Soporte iOS (UIBackgroundModes) y Android (FOREGROUND_SERVICE)
-
-### 📋 Proceso de Desarrollo
-Este release fue desarrollado siguiendo el **Protocolo de Equipos Virtuales de Vertex Developer**:
-
-1. **Reunión de Equipo Virtual** (7 superexpertos)
-   - Revisión crítica de V3
-   - Diseño del sistema Golden Boost
-   - Documentación en `docs/reuniones/2026-02-04-*.md`
-
-2. **Implementación** (~4 horas)
-   - Componentes UI con animaciones
-   - Integración Supabase realtime
-   - Dashboard admin
-
-3. **Migración** via Supabase Management API
+### ⏳ Pendiente para v0.2.0
+- [ ] Pagos reales (Stripe checkout)
+- [ ] Push notifications
+- [ ] Session ratings
+- [ ] DateTimePicker nativo
+- [ ] Expo sharing
 
 ---
 
-## [3.0.0] - 2026-02-03 — Full Supabase Integration
+## Versiones anteriores
 
-- 16/16 pantallas conectadas a Supabase
-- Sistema de propinas funcional
-- Chat en tiempo real
-- Cola de canciones con votación
-- Dashboard admin completo
-
----
-
-## [2.0.0] - 2026-02-02 — Core Features
-
-- Onboarding con OTP
-- Creación de sesiones
-- Sistema de roles (DJ, VIP, Moderador)
-- Integración Deezer para búsqueda
-
----
-
-## [1.0.0] - 2026-02-01 — Initial Release
-
-- Estructura base Expo + React Native
-- Diseño de componentes UI
-- Navegación y rutas
+### v3.0.0 - Migración arquitectura
+### v1.0-estable - Primera estable
+### v0.4.0-mvp-demo - Demo MVP
