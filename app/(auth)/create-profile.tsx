@@ -23,6 +23,7 @@ import { Input } from '../../src/components/ui/Input';
 import { supabase } from '../../src/lib/supabase';
 import { isDemoMode, clearNeedsProfile, getPendingPhone } from '../../src/lib/demo';
 import { useAuthStore } from '../../src/stores/authStore';
+import debugLog from '../../src/lib/debugToast';
 
 const GENRES = [
   'Reggaeton', 'Pop', 'Rock', 'Techno', 'Lo-Fi', 
@@ -59,12 +60,15 @@ export default function CreateProfileScreen() {
     
     setLoading(true);
     setError('');
+    debugLog.info('CreateProfile', 'Iniciando creación de perfil...');
 
     try {
       // Obtener teléfono pendiente
       const pendingPhone = getPendingPhone();
+      debugLog.info('CreateProfile', `Teléfono pendiente: ${pendingPhone || 'NO ENCONTRADO'}`);
       
       if (!pendingPhone) {
+        debugLog.error('CreateProfile', 'No hay teléfono pendiente');
         setError('No se encontró el teléfono. Vuelve a iniciar sesión.');
         setLoading(false);
         return;
@@ -74,9 +78,11 @@ export default function CreateProfileScreen() {
       const odUserId = phoneToUUID(pendingPhone);
       const cleanPhone = pendingPhone.replace(/[^0-9]/g, '');
       const username = `user_${cleanPhone.slice(-6)}`;
+      
+      debugLog.info('CreateProfile', `UUID: ${odUserId}, Username: ${username}`);
 
       // Crear o actualizar perfil en Supabase
-      console.log('Creating profile with ID:', odUserId, 'username:', username);
+      debugLog.info('CreateProfile', 'Llamando a Supabase...');
       
       const { data: profile, error: profileError } = await supabase
         .from('ws_profiles')
@@ -94,20 +100,21 @@ export default function CreateProfileScreen() {
         .select()
         .single();
 
-      console.log('Supabase response:', { profile, profileError });
-
       if (profileError) {
-        console.error('Error creating profile:', profileError);
+        debugLog.error('CreateProfile', 'Error de Supabase', profileError);
         setError(`Error: ${profileError.message}`);
         setLoading(false);
         return;
       }
       
       if (!profile) {
+        debugLog.error('CreateProfile', 'Perfil vacío retornado');
         setError('No se pudo crear el perfil. Inténtalo de nuevo.');
         setLoading(false);
         return;
       }
+      
+      debugLog.success('CreateProfile', `Perfil creado: ${profile.display_name}`);
 
       // Guardar en auth store
       useAuthStore.setState({

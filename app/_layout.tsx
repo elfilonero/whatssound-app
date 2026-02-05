@@ -17,6 +17,8 @@ import { colors } from '../src/theme/colors';
 import { useAuthStore } from '../src/stores/authStore';
 import { isDemoMode, DEMO_USER, DEMO_DJ, getNeedsProfile } from '../src/lib/demo';
 import { useDeepLinking } from '../src/hooks/useDeepLinking';
+import { DebugOverlay } from '../src/components/ui/DebugOverlay';
+import debugLog from '../src/lib/debugToast';
 
 // ═══════════════════════════════════════════════════════════
 // 🎯 MODOS:
@@ -131,6 +133,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  // Log inicial
+  useEffect(() => {
+    debugLog.info('App', `Iniciando - modo: ${isDemoMode() ? 'DEMO' : 'PRUEBAS'}`);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar style="light" />
@@ -157,6 +164,8 @@ export default function RootLayout() {
             />
           </Stack>
         </AuthGate>
+        {/* Debug overlay - solo en modo pruebas */}
+        {!isDemoMode() && <DebugOverlay />}
       </View>
     </QueryClientProvider>
   );

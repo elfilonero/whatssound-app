@@ -22,6 +22,7 @@ import { Button } from '../../src/components/ui/Button';
 import { supabase } from '../../src/lib/supabase';
 import { isDemoMode, isTestPhone, markNeedsProfile } from '../../src/lib/demo';
 import { useAuthStore } from '../../src/stores/authStore';
+import debugLog from '../../src/lib/debugToast';
 
 // Códigos de país comunes
 const COUNTRY_CODES = [
@@ -50,15 +51,19 @@ export default function LoginScreen() {
     
     setLoading(true);
     setError('');
+    debugLog.info('Login', `Iniciando login con ${fullPhone}`);
 
     try {
       // ══════════════════════════════════════════════════════════════
       // MODO PRUEBAS: Números ficticios saltan OTP → directo a perfil
       // ══════════════════════════════════════════════════════════════
       if (isTestNumber) {
+        debugLog.info('Login', 'Número de prueba detectado, saltando OTP');
+        
         if (Platform.OS === 'web') {
           localStorage.removeItem('ws_demo_mode');
           markNeedsProfile(fullPhone);
+          debugLog.info('Login', `Teléfono guardado: ${fullPhone}`);
           
           useAuthStore.setState({
             user: null,
@@ -69,6 +74,7 @@ export default function LoginScreen() {
           });
         }
         
+        debugLog.success('Login', 'Redirigiendo a crear perfil...');
         router.replace('/(auth)/create-profile');
         setLoading(false);
         return;
