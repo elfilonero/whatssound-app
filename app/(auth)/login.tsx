@@ -69,7 +69,7 @@ export default function LoginScreen() {
       // PUERTA DE PRUEBAS: Números ficticios saltan directo a perfil
       // ══════════════════════════════════════════════════════════════
       if (isTestPhone(cleanPhone)) {
-        console.log('🧪 Número de prueba detectado:', cleanPhone);
+        // console.log('🧪 Número de prueba detectado:', cleanPhone);
         
         if (Platform.OS === 'web') {
           // 1. Limpiar cualquier sesión demo/test anterior

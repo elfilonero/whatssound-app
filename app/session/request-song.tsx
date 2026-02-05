@@ -66,7 +66,7 @@ export default function RequestSongScreen() {
         status: 'pending',
       };
 
-      console.log('Guardando canción:', songData);
+      // console.log('Guardando canción:', songData);
 
       const { error } = await supabase
         .from('ws_songs')

@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { User, Session } from '@supabase/supabase-js';
+import { AUTH_STORAGE_KEY } from '../utils/supabase-config';
 
 interface Profile {
   id: string;
@@ -50,7 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // First try to restore session from localStorage (no network call)
       if (typeof window !== 'undefined') {
         try {
-          const stored = localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token');
+          const stored = localStorage.getItem(AUTH_STORAGE_KEY);
           if (stored) {
             const parsed = JSON.parse(stored);
             if (parsed.access_token && parsed.user && parsed.expires_at > Date.now() / 1000) {

@@ -35,8 +35,12 @@ if (Platform.OS === 'web') {
   }
 }
 
-const SB = 'https://xyehncvvvprrqwnsefcr.supabase.co/rest/v1';
-const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
+import { 
+  SUPABASE_REST_URL as SB, 
+  SUPABASE_ANON_KEY as ANON,
+  getAccessToken,
+  getCurrentUserId 
+} from '../../src/utils/supabase-config';
 
 // El modo demo se controla por URL: ?demo=true (mock) o ?demo=false (real)
 // IDs especiales siempre usan mock: g1, demo*, test*
@@ -49,13 +53,8 @@ function isGroupDemo(groupId: string | undefined): boolean {
 }
 
 function getHeaders() {
-  let token = '';
-  try { token = JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').access_token || ''; } catch {}
+  const token = getAccessToken();
   return { 'apikey': ANON, 'Authorization': `Bearer ${token || ANON}`, 'Content-Type': 'application/json' };
-}
-
-function getCurrentUserId() {
-  try { return JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').user?.id || ''; } catch { return ''; }
 }
 
 // WhatsApp-style sender colors

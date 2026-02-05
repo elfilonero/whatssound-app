@@ -4,18 +4,18 @@
  */
 
 import { create } from 'zustand';
-
-const SUPABASE_URL = 'https://xyehncvvvprrqwnsefcr.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
-const AUTH_STORAGE_KEY = 'sb-xyehncvvvprrqwnsefcr-auth-token';
+import { 
+  SUPABASE_URL, 
+  SUPABASE_ANON_KEY,
+  AUTH_STORAGE_KEY,
+  getAuthData 
+} from '../utils/supabase-config';
 
 function getLocalUser(): { user: any; accessToken: string } | null {
-  try {
-    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    if (parsed.user && parsed.access_token) return { user: parsed.user, accessToken: parsed.access_token };
-  } catch {}
+  const auth = getAuthData();
+  if (auth?.user && auth?.access_token) {
+    return { user: auth.user, accessToken: auth.access_token };
+  }
   return null;
 }
 

@@ -18,12 +18,14 @@ if (Platform.OS === 'web') {
   if (!document.querySelector('style[data-ionicons-fix]')) { s.setAttribute('data-ionicons-fix','1'); document.head.appendChild(s); }
 }
 
-const SUPABASE_URL = 'https://xyehncvvvprrqwnsefcr.supabase.co';
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
+import { 
+  SUPABASE_URL, 
+  SUPABASE_ANON_KEY as ANON_KEY,
+  getAccessToken 
+} from '../src/utils/supabase-config';
 
 function getHeaders() {
-  let token = '';
-  try { token = JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').access_token || ''; } catch {}
+  const token = getAccessToken();
   return { 'apikey': ANON_KEY, 'Authorization': `Bearer ${token || ANON_KEY}`, 'Content-Type': 'application/json' };
 }
 

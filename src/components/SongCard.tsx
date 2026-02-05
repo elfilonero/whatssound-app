@@ -8,21 +8,22 @@ import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing, borderRadius } from '../theme/spacing';
 
-const SUPABASE_API_URL = 'https://xyehncvvvprrqwnsefcr.supabase.co/rest/v1/';
-const SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh5ZWhuY3Z2dnBycnF3bnNlZmNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2NTA4OTgsImV4cCI6MjA4NTIyNjg5OH0.VEaTmqpMA7XdUa-tZ7mXib1ciweD7y5UU4dFGZq3EtQ';
+import { 
+  SUPABASE_REST_URL,
+  SUPABASE_ANON_KEY as SUPABASE_API_KEY,
+  getAccessToken,
+  getCurrentUserId 
+} from '../utils/supabase-config';
+
+const SUPABASE_API_URL = `${SUPABASE_REST_URL}/`;
 
 function getSupabaseHeaders(): Record<string, string> {
-  let token = '';
-  try { token = JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').access_token || ''; } catch {}
+  const token = getAccessToken();
   return {
     'apikey': SUPABASE_API_KEY,
     'Authorization': `Bearer ${token || SUPABASE_API_KEY}`,
     'Content-Type': 'application/json',
   };
-}
-
-function getCurrentUserId(): string {
-  try { return JSON.parse(localStorage.getItem('sb-xyehncvvvprrqwnsefcr-auth-token') || '{}').user?.id || ''; } catch { return ''; }
 }
 
 export interface SongData {
