@@ -14,6 +14,8 @@ import {
   Animated,
   Dimensions,
   TextInput,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -173,7 +175,17 @@ export default function DJPanelScreen() {
             <Text style={styles.liveText}>EN VIVO</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={() => {}} style={styles.settingsBtn}>
+        <TouchableOpacity onPress={() => {
+          if (Platform.OS === 'web') {
+            window.alert('Configuración de sesión\n\n• Cerrar solicitudes\n• Terminar sesión\n• Editar información');
+          } else {
+            Alert.alert('Configuración', 'Opciones de sesión', [
+              { text: 'Cerrar solicitudes', onPress: () => {} },
+              { text: 'Terminar sesión', style: 'destructive', onPress: () => {} },
+              { text: 'Cancelar', style: 'cancel' },
+            ]);
+          }
+        }} style={styles.settingsBtn}>
           <Ionicons name="settings-outline" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>

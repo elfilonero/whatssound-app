@@ -118,7 +118,7 @@ export default function NewGroupScreen() {
     });
 
     setCreating(false);
-    router.replace(`/session/${data.id}`);
+    router.replace(`/group/${data.id}`);
   };
 
   if (loading) {

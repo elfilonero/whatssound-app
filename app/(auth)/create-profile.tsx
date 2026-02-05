@@ -21,7 +21,7 @@ import { spacing, borderRadius } from '../../src/theme/spacing';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { supabase } from '../../src/lib/supabase';
-import { isTestMode, getOrCreateTestUser } from '../../src/lib/demo';
+import { isTestMode, getOrCreateTestUser, clearTestNeedsProfile } from '../../src/lib/demo';
 import { useAuthStore } from '../../src/stores/authStore';
 
 const GENRES = [
@@ -73,19 +73,42 @@ export default function CreateProfileScreen() {
             console.warn('Error updating profile:', updateError);
           }
 
-          setProfile({
-            id: testProfile.id,
-            display_name: name.trim(),
-            username: testProfile.username,
-            avatar_url: testProfile.avatar_url,
-            is_dj: testProfile.is_dj,
-            bio: bio.trim(),
-            is_verified: false,
-            dj_name: null,
-            genres: selectedGenres,
-            role: 'user',
+          // Guardar user + session + profile en el store
+          // AuthGate verifica 'user', no solo 'profile'
+          useAuthStore.setState({
+            user: {
+              id: testProfile.id,
+              email: `${testProfile.username}@test.whatssound.app`,
+              app_metadata: {},
+              user_metadata: { display_name: name.trim() },
+              aud: 'authenticated',
+              created_at: new Date().toISOString(),
+            } as any,
+            session: {
+              access_token: 'test-token',
+              refresh_token: 'test-refresh',
+              expires_at: Math.floor(Date.now() / 1000) + 86400,
+              user: { id: testProfile.id },
+            } as any,
+            profile: {
+              id: testProfile.id,
+              display_name: name.trim(),
+              username: testProfile.username,
+              avatar_url: testProfile.avatar_url,
+              is_dj: testProfile.is_dj,
+              bio: bio.trim(),
+              is_verified: false,
+              dj_name: null,
+              genres: selectedGenres,
+              role: 'user',
+            },
+            initialized: true,
+            loading: false,
           });
 
+          // Clear the flag that was blocking auto-auth
+          clearTestNeedsProfile();
+          
           router.replace('/(auth)/permissions');
         }
         setLoading(false);

@@ -10,6 +10,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -49,6 +51,15 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { profile, user, signOut } = useAuthStore();
 
+  const showComingSoon = (feature: string) => {
+    const msg = `${feature} estará disponible próximamente`;
+    if (Platform.OS === 'web') {
+      window.alert(msg);
+    } else {
+      Alert.alert('Próximamente', msg);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     router.replace('/(auth)/login');
@@ -82,7 +93,7 @@ export default function SettingsScreen() {
         <SettingItem icon="person-outline" title="Perfil de DJ" subtitle="Configura tu perfil como DJ" onPress={() => router.push('/settings/dj-profile')} />
         <SettingItem icon="stats-chart" title="Mi Dashboard" subtitle="Métricas y estadísticas" onPress={() => router.push('/dj-dashboard')} />
         <SettingItem icon="diamond-outline" title="Suscripción" subtitle="Gestiona tu plan" onPress={() => router.push('/subscription')} />
-        <SettingItem icon="card-outline" title="Pagos y volumen" subtitle="Métodos de pago, historial" />
+        <SettingItem icon="card-outline" title="Pagos y volumen" subtitle="Métodos de pago, historial" onPress={() => showComingSoon('Pagos y volumen')} />
         <SettingItem icon="trophy" title="Golden Boosts" subtitle="Tu historial de reconocimientos" onPress={() => router.push('/profile/golden-history')} />
         <SettingItem icon="gift-outline" title="Invitar amigos" subtitle="Comparte tu código y gana" onPress={() => router.push('/invite')} />
         <SettingItem icon="notifications-outline" title="Notificaciones" subtitle="Sesiones, volumen, menciones" onPress={() => router.push('/settings/notifications')} />
@@ -93,7 +104,7 @@ export default function SettingsScreen() {
       <SectionHeader title="APLICACIÓN" />
       <View style={styles.section}>
         <SettingItem icon="color-palette-outline" title="Apariencia" subtitle="Tema oscuro" onPress={() => router.push('/settings/appearance')} />
-        <SettingItem icon="language-outline" title="Idioma" subtitle="Español" />
+        <SettingItem icon="language-outline" title="Idioma" subtitle="Español" onPress={() => showComingSoon('Selector de idioma')} />
         <SettingItem icon="volume-medium-outline" title="Audio" subtitle="Calidad, auto-play" onPress={() => router.push('/settings/audio')} />
         <SettingItem icon="cloud-download-outline" title="Almacenamiento" subtitle="42 MB usados" onPress={() => router.push('/settings/storage')} />
       </View>

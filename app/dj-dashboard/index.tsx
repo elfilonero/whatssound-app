@@ -207,7 +207,7 @@ export default function DJDashboardFree() {
               <Text style={styles.emptyText}>Aún no has creado sesiones</Text>
               <TouchableOpacity
                 style={styles.createBtn}
-                onPress={() => router.push('/create-session')}
+                onPress={() => router.push('/session/create')}
               >
                 <Text style={styles.createBtnText}>Crear mi primera sesión</Text>
               </TouchableOpacity>

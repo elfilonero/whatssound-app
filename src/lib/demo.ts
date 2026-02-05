@@ -131,6 +131,40 @@ export function setDemoMode(enabled: boolean) {
 }
 
 /**
+ * Enable test mode for a phone number (used by login with test phones)
+ * Creates a pseudo test user based on the phone number
+ * Marks that profile creation is needed (won't auto-inject user)
+ */
+export function enableTestModeForPhone(phone: string) {
+  // Generate a username from phone (last 6 digits)
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const username = `tester_${cleanPhone.slice(-6)}`;
+  
+  _testUser = username;
+  _isDemoMode = false;
+  
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.setItem('ws_test_user', username);
+      localStorage.setItem('ws_test_phone', phone);
+      localStorage.setItem('ws_test_needs_profile', 'true'); // Mark needs profile creation
+      localStorage.removeItem('ws_demo_mode');
+    } catch {}
+  }
+}
+
+/**
+ * Clear the needs_profile flag after profile is created
+ */
+export function clearTestNeedsProfile() {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.removeItem('ws_test_needs_profile');
+    } catch {}
+  }
+}
+
+/**
  * Get or create test user profile in Supabase.
  * Auto-creates if not found. Returns profile for auth store injection.
  */

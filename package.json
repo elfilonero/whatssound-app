@@ -8,7 +8,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "test:nav": "node scripts/test-navigation.js",
+    "test:all": "npm run test:nav && npm test"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

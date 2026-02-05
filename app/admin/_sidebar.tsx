@@ -16,6 +16,7 @@ const ITEMS: { icon: keyof typeof Ionicons.glyphMap; label: string; path: string
   { icon: 'warning', label: 'Alertas', path: '/admin/alerts' },
   { icon: 'settings', label: 'Config', path: '/admin/config' },
   { icon: 'medkit', label: 'Health', path: '/admin/health' },
+  { icon: 'git-branch', label: 'Navigation', path: '/admin/navigation' },
 ];
 
 export default function AdminSidebar() {

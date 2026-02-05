@@ -63,7 +63,23 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isTestMode()) {
-      // TEST MODE: create/find real user in Supabase, inject into store
+      // TEST MODE: check if coming from phone login (needs to complete profile first)
+      const needsProfile = Platform.OS === 'web' && typeof window !== 'undefined' 
+        && localStorage.getItem('ws_test_needs_profile') === 'true';
+      
+      if (needsProfile) {
+        // Don't auto-create user, let them go through create-profile
+        useAuthStore.setState({
+          user: null,
+          session: null,
+          profile: null,
+          initialized: true,
+          loading: false,
+        });
+        return;
+      }
+      
+      // TEST MODE (from URL ?test=nombre): create/find real user in Supabase
       (async () => {
         const testProfile = await getOrCreateTestUser();
         if (testProfile) {
@@ -104,12 +120,20 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!initialized) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const currentPath = segments.join('/');
+    
+    // Rutas de auth que permiten tener user (flujo de registro)
+    const authRoutesWithUser = ['(auth)/permissions', '(auth)/create-profile', '(auth)/onboarding', '(auth)/genres'];
+    const isAllowedAuthRoute = authRoutesWithUser.some(route => currentPath.startsWith(route.replace('(auth)/', '')));
 
     if (!user && !inAuthGroup) {
+      // Sin user y fuera de auth → ir a login
       router.replace('/(auth)/login');
-    } else if (user && inAuthGroup) {
+    } else if (user && inAuthGroup && !isAllowedAuthRoute) {
+      // Con user en auth, pero NO en rutas permitidas → ir a tabs
       router.replace('/(tabs)');
     }
+    // Si está en ruta permitida con user, NO redirigir (dejar que complete el flujo)
   }, [user, initialized, segments]);
 
   if (!isDemoMode() && !initialized) {

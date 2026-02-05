@@ -2,8 +2,8 @@
  * WhatsSound — Almacenamiento y Caché
  */
 
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme/colors';
@@ -20,6 +20,80 @@ const STORAGE_ITEMS = [
 
 export default function StorageScreen() {
   const router = useRouter();
+  const [clearing, setClearing] = useState<string | null>(null);
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
+  const clearAudioCache = async () => {
+    setClearing('audio');
+    try {
+      if (Platform.OS === 'web' && 'caches' in window) {
+        const keys = await caches.keys();
+        const audioKeys = keys.filter(k => k.includes('audio') || k.includes('media'));
+        await Promise.all(audioKeys.map(k => caches.delete(k)));
+      }
+      // Limpiar localStorage relacionado con audio
+      if (typeof localStorage !== 'undefined') {
+        Object.keys(localStorage).filter(k => k.includes('audio')).forEach(k => localStorage.removeItem(k));
+      }
+      showAlert('✅ Listo', 'Caché de audio limpiada correctamente');
+    } catch (e) {
+      showAlert('Error', 'No se pudo limpiar la caché de audio');
+    }
+    setClearing(null);
+  };
+
+  const clearImageCache = async () => {
+    setClearing('images');
+    try {
+      if (Platform.OS === 'web' && 'caches' in window) {
+        const keys = await caches.keys();
+        const imgKeys = keys.filter(k => k.includes('image') || k.includes('img'));
+        await Promise.all(imgKeys.map(k => caches.delete(k)));
+      }
+      showAlert('✅ Listo', 'Caché de imágenes limpiada correctamente');
+    } catch (e) {
+      showAlert('Error', 'No se pudo limpiar la caché de imágenes');
+    }
+    setClearing(null);
+  };
+
+  const clearAllData = async () => {
+    const confirm = Platform.OS === 'web' 
+      ? window.confirm('¿Estás seguro? Esto borrará todos los datos locales y cerrarás sesión.')
+      : true; // En móvil usar Alert con botones
+    
+    if (!confirm) return;
+    
+    setClearing('all');
+    try {
+      if (Platform.OS === 'web') {
+        // Limpiar localStorage
+        localStorage.clear();
+        // Limpiar sessionStorage
+        sessionStorage.clear();
+        // Limpiar caches
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      }
+      showAlert('✅ Listo', 'Todos los datos locales han sido borrados. La app se recargará.');
+      // Recargar para aplicar cambios
+      setTimeout(() => {
+        if (Platform.OS === 'web') window.location.reload();
+      }, 1500);
+    } catch (e) {
+      showAlert('Error', 'No se pudieron borrar todos los datos');
+    }
+    setClearing(null);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -59,9 +133,30 @@ export default function StorageScreen() {
       {/* Actions */}
       <Text style={styles.sectionLabel}>ACCIONES</Text>
       <View style={styles.actionsSection}>
-        <Button title="Limpiar caché de audio" onPress={() => {}} variant="secondary" fullWidth icon={<Ionicons name="trash-outline" size={18} color={colors.primary} />} />
-        <Button title="Limpiar imágenes en caché" onPress={() => {}} variant="secondary" fullWidth icon={<Ionicons name="image-outline" size={18} color={colors.primary} />} />
-        <Button title="Borrar todos los datos locales" onPress={() => {}} variant="danger" fullWidth icon={<Ionicons name="warning-outline" size={18} color={colors.error} />} />
+        <Button 
+          title={clearing === 'audio' ? "Limpiando..." : "Limpiar caché de audio"} 
+          onPress={clearAudioCache} 
+          variant="secondary" 
+          fullWidth 
+          disabled={clearing !== null}
+          icon={<Ionicons name="trash-outline" size={18} color={colors.primary} />} 
+        />
+        <Button 
+          title={clearing === 'images' ? "Limpiando..." : "Limpiar imágenes en caché"} 
+          onPress={clearImageCache} 
+          variant="secondary" 
+          fullWidth 
+          disabled={clearing !== null}
+          icon={<Ionicons name="image-outline" size={18} color={colors.primary} />} 
+        />
+        <Button 
+          title={clearing === 'all' ? "Borrando..." : "Borrar todos los datos locales"} 
+          onPress={clearAllData} 
+          variant="danger" 
+          fullWidth 
+          disabled={clearing !== null}
+          icon={<Ionicons name="warning-outline" size={18} color={colors.error} />} 
+        />
       </View>
 
       <Text style={styles.disclaimer}>

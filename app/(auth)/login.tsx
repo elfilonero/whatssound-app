@@ -21,7 +21,19 @@ import { typography } from '../../src/theme/typography';
 import { spacing, borderRadius } from '../../src/theme/spacing';
 import { Button } from '../../src/components/ui/Button';
 import { supabase } from '../../src/lib/supabase';
-import { isTestMode, getOrCreateTestUser } from '../../src/lib/demo';
+import { isTestMode, getOrCreateTestUser, enableTestModeForPhone } from '../../src/lib/demo';
+import { useAuthStore } from '../../src/stores/authStore';
+
+// ══════════════════════════════════════════════════════════════
+// MODO PRUEBA: Todos los números españoles de 9 dígitos son de prueba
+// Esto permite probar el flujo completo sin verificación SMS real
+// En producción real, eliminar esta función y usar Supabase Auth
+// ══════════════════════════════════════════════════════════════
+function isTestPhone(phone: string): boolean {
+  const cleanPhone = phone.replace(/\s/g, '');
+  // Cualquier número de 9 dígitos es de prueba (para desarrollo)
+  return cleanPhone.length >= 9;
+}
 
 // Códigos de país comunes
 const COUNTRY_CODES = [
@@ -51,9 +63,41 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      // En modo test, saltamos la verificación real
+      const cleanPhone = phone.replace(/\s/g, '');
+      
+      // ══════════════════════════════════════════════════════════════
+      // PUERTA DE PRUEBAS: Números ficticios saltan directo a perfil
+      // ══════════════════════════════════════════════════════════════
+      if (isTestPhone(cleanPhone)) {
+        console.log('🧪 Número de prueba detectado:', cleanPhone);
+        
+        if (Platform.OS === 'web') {
+          // 1. Limpiar cualquier sesión demo/test anterior
+          localStorage.removeItem('ws_demo_mode');
+          localStorage.removeItem('ws_test_user');
+          
+          // 2. Activar modo test para este teléfono
+          enableTestModeForPhone(fullPhone);
+          localStorage.setItem('ws_pending_phone', fullPhone);
+          
+          // 3. Limpiar el auth store para evitar redirect automático
+          useAuthStore.setState({
+            user: null,
+            session: null,
+            profile: null,
+            initialized: true,
+            loading: false,
+          });
+        }
+        
+        // Saltar OTP → ir directo a crear perfil
+        router.replace('/(auth)/create-profile');
+        setLoading(false);
+        return;
+      }
+
+      // En modo test (vía URL ?test=nombre), saltamos verificación
       if (isTestMode()) {
-        // Guardamos el teléfono en localStorage para usarlo después
         if (Platform.OS === 'web') {
           localStorage.setItem('ws_pending_phone', fullPhone);
         }
@@ -167,10 +211,14 @@ export default function LoginScreen() {
         />
 
         {/* Test mode indicator */}
-        {isTestMode() && (
+        {(isTestMode() || isTestPhone(phone.replace(/\s/g, ''))) && (
           <View style={styles.testBadge}>
             <Ionicons name="flask" size={14} color={colors.warning} />
-            <Text style={styles.testBadgeText}>Modo demo: verificación simulada</Text>
+            <Text style={styles.testBadgeText}>
+              {isTestPhone(phone.replace(/\s/g, '')) 
+                ? '🧪 Número de prueba: saltará verificación'
+                : 'Modo demo: verificación simulada'}
+            </Text>
           </View>
         )}
 
