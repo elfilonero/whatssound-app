@@ -1,6 +1,7 @@
 module.exports = {
   testMatch: ['**/__tests__/**/*.test.{js,jsx,ts,tsx}'],
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.expo/'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/.expo/', '/referencia/', '/docs/'],
+  modulePathIgnorePatterns: ['/referencia/', '/docs/'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: { module: 'commonjs', target: 'es2020', jsx: 'react', esModuleInterop: true } }],
   },
