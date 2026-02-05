@@ -11,3 +11,6 @@ export type { QueuedSong } from './SongQueue';
 
 export { SessionChat } from './SessionChat';
 export type { ChatMessage } from './SessionChat';
+
+export { StatsGrid, SessionStats } from './StatsGrid';
+export type { Stat } from './StatsGrid';
